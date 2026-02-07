@@ -1,28 +1,12 @@
 import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useTenant } from '@/contexts/TenantContext';
 import { Image, Play, Trophy, X } from 'lucide-react';
 
-import gallery1 from '@/assets/gallery-1.jpeg';
-import gallery2 from '@/assets/gallery-2.jpeg';
-import gallery3 from '@/assets/gallery-3.jpeg';
-import facultyProfile from '@/assets/faculty-profile.jpeg';
-
 const Media = () => {
-  const { t } = useLanguage();
+  const { t, tr } = useLanguage();
+  const { config } = useTenant();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-
-  const photos = [
-    { src: gallery1, caption: 'Parent-Teacher Meeting' },
-    { src: facultyProfile, caption: 'Mr. Karthik Ananthoju' },
-    { src: gallery2, caption: 'Certificate Distribution' },
-    { src: gallery3, caption: 'Classroom Teaching' },
-  ];
-
-  const achievements = [
-    { title: 'Narayana Educational Academy', description: 'Former faculty member with extensive experience' },
-    { title: 'B.Tech Graduate', description: 'Electrical Engineering background' },
-    { title: 'Concept-based Teaching', description: 'Pioneer in fundamental-focused education' },
-  ];
 
   return (
     <div className="animate-fade-in">
@@ -30,7 +14,7 @@ const Media = () => {
       <section className="section-padding bg-gradient-to-br from-primary/10 to-secondary/10">
         <div className="container-custom text-center">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">{t('media.title')}</h1>
-          <p className="text-muted-foreground">Explore our journey and achievements</p>
+          <p className="text-muted-foreground">{tr(config.media.subtitle)}</p>
         </div>
       </section>
 
@@ -45,19 +29,15 @@ const Media = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {photos.map((photo, index) => (
+            {config.media.photos.map((photo, index) => (
               <div
                 key={index}
                 className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer card-elevated"
                 onClick={() => setSelectedImage(photo.src)}
               >
-                <img
-                  src={photo.src}
-                  alt={photo.caption}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+                <img src={photo.src} alt={tr(photo.caption)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                  <span className="text-white font-medium text-sm">{photo.caption}</span>
+                  <span className="text-white font-medium text-sm">{tr(photo.caption)}</span>
                 </div>
               </div>
             ))}
@@ -76,24 +56,16 @@ const Media = () => {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            <div className="aspect-video bg-muted rounded-xl flex items-center justify-center card-elevated">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Play className="w-8 h-8 text-primary" />
+            {[1, 2].map((i) => (
+              <div key={i} className="aspect-video bg-muted rounded-xl flex items-center justify-center card-elevated">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Play className="w-8 h-8 text-primary" />
+                  </div>
+                  <p className="text-muted-foreground">{t('coming.soon')}</p>
                 </div>
-                <p className="text-muted-foreground">Coming Soon</p>
-                <p className="text-sm text-muted-foreground/60">Video content will be added soon</p>
               </div>
-            </div>
-            <div className="aspect-video bg-muted rounded-xl flex items-center justify-center card-elevated">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Play className="w-8 h-8 text-primary" />
-                </div>
-                <p className="text-muted-foreground">Coming Soon</p>
-                <p className="text-sm text-muted-foreground/60">Teaching demonstrations</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -109,13 +81,13 @@ const Media = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {achievements.map((achievement, index) => (
+            {config.media.achievements.map((achievement, index) => (
               <div key={index} className="feature-card">
                 <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-4">
                   <Trophy className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="font-semibold text-lg mb-2">{achievement.title}</h3>
-                <p className="text-muted-foreground text-sm">{achievement.description}</p>
+                <h3 className="font-semibold text-lg mb-2">{tr(achievement.title)}</h3>
+                <p className="text-muted-foreground text-sm">{tr(achievement.description)}</p>
               </div>
             ))}
           </div>
@@ -124,22 +96,11 @@ const Media = () => {
 
       {/* Lightbox */}
       {selectedImage && (
-        <div
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedImage(null)}
-        >
-          <button
-            className="absolute top-4 right-4 text-white p-2 hover:bg-white/10 rounded-full transition-colors"
-            onClick={() => setSelectedImage(null)}
-          >
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setSelectedImage(null)}>
+          <button className="absolute top-4 right-4 text-white p-2 hover:bg-white/10 rounded-full transition-colors" onClick={() => setSelectedImage(null)}>
             <X className="w-8 h-8" />
           </button>
-          <img
-            src={selectedImage}
-            alt="Gallery"
-            className="max-w-full max-h-[90vh] object-contain rounded-lg"
-            onClick={(e) => e.stopPropagation()}
-          />
+          <img src={selectedImage} alt="Gallery" className="max-w-full max-h-[90vh] object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>
