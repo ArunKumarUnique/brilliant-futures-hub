@@ -2,21 +2,25 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, GraduationCap } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useTenant } from '@/contexts/TenantContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
+  const { config } = useTenant();
   const location = useLocation();
 
-  const navLinks = [
-    { path: '/', label: t('nav.home') },
-    { path: '/faculty', label: t('nav.faculty') },
-    { path: '/admissions', label: t('nav.admissions') },
-    { path: '/media', label: t('nav.media') },
-    { path: '/contact', label: t('nav.contact') },
+  const allLinks = [
+    { path: '/', label: t('nav.home'), enabled: config.pages.home },
+    { path: '/faculty', label: t('nav.faculty'), enabled: config.pages.faculty },
+    { path: '/admissions', label: t('nav.admissions'), enabled: config.pages.admissions },
+    { path: '/media', label: t('nav.media'), enabled: config.pages.media },
+    { path: '/contact', label: t('nav.contact'), enabled: config.pages.contact },
   ];
 
+  const navLinks = allLinks.filter((l) => l.enabled);
   const isActive = (path: string) => location.pathname === path;
+  const hasMultipleLanguages = config.languages.enabled.length > 1;
 
   return (
     <header className="bg-card/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
@@ -28,8 +32,14 @@ const Header = () => {
               <GraduationCap className="h-6 w-6 text-primary-foreground" />
             </div>
             <div>
-              <span className="font-bold text-lg md:text-xl text-foreground">Brilliant</span>
-              <span className="font-bold text-lg md:text-xl text-primary"> Tutorials</span>
+              {config.instituteNameParts ? (
+                <>
+                  <span className="font-bold text-lg md:text-xl text-foreground">{config.instituteNameParts[0]}</span>
+                  <span className="font-bold text-lg md:text-xl text-primary"> {config.instituteNameParts[1]}</span>
+                </>
+              ) : (
+                <span className="font-bold text-lg md:text-xl text-foreground">{config.instituteName}</span>
+              )}
             </div>
           </Link>
 
@@ -48,20 +58,19 @@ const Header = () => {
 
           {/* Language Toggle & Mobile Menu */}
           <div className="flex items-center gap-4">
-            <div className="flex rounded-full overflow-hidden border border-border">
-              <button
-                onClick={() => setLanguage('en')}
-                className={`lang-toggle ${language === 'en' ? 'lang-toggle-active' : 'lang-toggle-inactive'}`}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => setLanguage('te')}
-                className={`lang-toggle ${language === 'te' ? 'lang-toggle-active' : 'lang-toggle-inactive'}`}
-              >
-                తెలుగు
-              </button>
-            </div>
+            {hasMultipleLanguages && (
+              <div className="flex rounded-full overflow-hidden border border-border">
+                {config.languages.enabled.map((lang) => (
+                  <button
+                    key={lang}
+                    onClick={() => setLanguage(lang)}
+                    className={`lang-toggle ${language === lang ? 'lang-toggle-active' : 'lang-toggle-inactive'}`}
+                  >
+                    {config.languages.labels[lang]}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
