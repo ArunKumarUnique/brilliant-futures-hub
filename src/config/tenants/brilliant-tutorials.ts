@@ -41,6 +41,7 @@ const config: TenantConfig = {
     'nav.admissions': { en: 'Admissions', te: 'ప్రవేశాలు' },
     'nav.media': { en: 'Media', te: 'మీడియా' },
     'nav.contact': { en: 'Contact', te: 'సంప్రదించండి' },
+    'nav.brochure': { en: 'Brochure', te: 'బ్రోచర్' },
     'hero.enquire': { en: 'Enquire Now', te: 'ఇప్పుడు విచారించండి' },
     'hero.admissions': { en: 'Admissions Open 2026–27', te: 'ప్రవేశాలు 2026–27' },
     'why.title': { en: 'Why Brilliant Tutorials?', te: 'బ్రిలియంట్ ట్యుటోరియల్స్ ఎందుకు?' },
@@ -80,6 +81,7 @@ const config: TenantConfig = {
     admissions: true,
     media: true,
     contact: true,
+    brochureBuilder: true,
   },
 
   hero: {
