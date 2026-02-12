@@ -22,46 +22,52 @@ const Index = () => {
   return (
     <div className="animate-fade-in">
       {/* Hero Section */}
-      <section className="relative h-[70vh] md:h-[80vh] overflow-hidden">
+      <section className="relative h-[80vh] md:h-[90vh] overflow-hidden">
         {heroImages.map((img, index) => (
           <div
             key={index}
             className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? 'opacity-100' : 'opacity-0'}`}
           >
-            <img src={img} alt={`${config.instituteName} ${index + 1}`} className="w-full h-full object-cover" />
+            <img
+              src={img}
+              alt={`${config.instituteName} ${index + 1}`}
+              className={`w-full h-full object-cover transition-transform duration-[7000ms] ease-out ${index === currentSlide ? 'scale-110' : 'scale-100'}`}
+            />
           </div>
         ))}
 
-        <div className="absolute inset-0 hero-overlay" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
 
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-6 max-w-4xl animate-slide-up">
-            {tr(config.hero.tagline)}
-          </h1>
-          <div className="flex flex-col sm:flex-row gap-4 mt-4">
-            {config.hero.ctaButtons.map((btn, i) => (
-              <Link
-                key={i}
-                to={btn.link}
-                className={
-                  btn.variant === 'primary'
-                    ? 'btn-primary bg-white text-primary hover:bg-white/90'
-                    : 'btn-outline border-white text-white hover:bg-white hover:text-primary'
-                }
-              >
-                {tr(btn.label)}
-              </Link>
-            ))}
+        <div className="absolute inset-0 flex flex-col items-end justify-end text-center px-4 pb-24 md:pb-32">
+          <div className="w-full">
+            <h1 className="text-xl md:text-3xl lg:text-4xl font-bold text-white mb-4 max-w-3xl mx-auto animate-slide-up drop-shadow-lg">
+              {tr(config.hero.tagline)}
+            </h1>
+            <div className="flex flex-col sm:flex-row gap-3 mt-3 justify-center">
+              {config.hero.ctaButtons.map((btn, i) => (
+                <Link
+                  key={i}
+                  to={btn.link}
+                  className={
+                    btn.variant === 'primary'
+                      ? 'btn-primary bg-white/95 text-primary hover:bg-white text-sm md:text-base px-5 py-2.5'
+                      : 'btn-outline border-white/80 text-white hover:bg-white hover:text-primary text-sm md:text-base px-5 py-2.5'
+                  }
+                >
+                  {tr(btn.label)}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
 
         {heroImages.length > 1 && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2.5">
             {heroImages.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}
-                className={`w-3 h-3 rounded-full transition-all ${index === currentSlide ? 'bg-white scale-110' : 'bg-white/50'}`}
+                className={`transition-all duration-300 rounded-full ${index === currentSlide ? 'w-8 h-3 bg-white' : 'w-3 h-3 bg-white/50 hover:bg-white/70'}`}
                 aria-label={`Go to slide ${index + 1}`}
               />
             ))}
