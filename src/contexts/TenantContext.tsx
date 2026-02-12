@@ -17,21 +17,22 @@ const tenantConfig = loadTenantConfig(tenantId);
 export const isTenantValid = (): boolean => !!tenantConfig;
 
 export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  if (!tenantConfig) {
-    throw new Error(`Tenant config not found for id: ${tenantId}`);
-  }
-  const config = tenantConfig;
+  const config = tenantConfig!;
 
   useEffect(() => {
-    applyTheme(config.theme);
-  }, [config.theme]);
+    if (config) applyTheme(config.theme);
+  }, [config?.theme]);
 
-  useSEO(config.seo);
+  useSEO(config?.seo ?? { title: '', description: '', keywords: '', ogTitle: '', ogDescription: '' });
 
   const tr = (value: Translatable, language: string): string => {
     if (typeof value === 'string') return value;
     return value[language] || value[Object.keys(value)[0]] || '';
   };
+
+  if (!tenantConfig) {
+    return null;
+  }
 
   return (
     <TenantContext.Provider value={{ config, tr }}>
