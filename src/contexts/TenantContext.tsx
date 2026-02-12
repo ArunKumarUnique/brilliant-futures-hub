@@ -17,7 +17,10 @@ const tenantConfig = loadTenantConfig(tenantId);
 export const isTenantValid = (): boolean => !!tenantConfig;
 
 export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const config = tenantConfig!;
+  if (!tenantConfig) {
+    throw new Error(`Tenant config not found for id: ${tenantId}`);
+  }
+  const config = tenantConfig;
 
   useEffect(() => {
     applyTheme(config.theme);
