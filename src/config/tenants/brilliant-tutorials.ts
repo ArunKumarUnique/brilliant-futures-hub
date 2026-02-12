@@ -84,10 +84,12 @@ const config: TenantConfig = {
 
   hero: {
     images: [
-      '/tenants/brilliant-tutorials/gallery-1.jpeg',
-      '/tenants/brilliant-tutorials/gallery-2.jpeg',
-      '/tenants/brilliant-tutorials/gallery-3.jpeg',
-      '/tenants/brilliant-tutorials/faculty-profile.jpeg',
+      '/tenants/brilliant-tutorials/hero-1.jpeg',
+      '/tenants/brilliant-tutorials/hero-2.jpeg',
+      '/tenants/brilliant-tutorials/hero-3.jpeg',
+      '/tenants/brilliant-tutorials/hero-4.jpeg',
+      '/tenants/brilliant-tutorials/hero-5.jpeg',
+      '/tenants/brilliant-tutorials/hero-6.jpeg',
     ],
     tagline: { en: 'Building Strong Concepts. Shaping Bright Futures.', te: 'బలమైన కాన్సెప్ట్‌లు. ఉజ్వల భవిష్యత్తు.' },
     ctaButtons: [
