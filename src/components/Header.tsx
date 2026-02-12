@@ -16,6 +16,7 @@ const Header = () => {
     { path: '/admissions', label: t('nav.admissions'), enabled: config.pages.admissions },
     { path: '/media', label: t('nav.media'), enabled: config.pages.media },
     { path: '/contact', label: t('nav.contact'), enabled: config.pages.contact },
+    { path: '/brochure-builder', label: t('nav.brochure'), enabled: config.pages.brochureBuilder },
   ];
 
   const navLinks = allLinks.filter((l) => l.enabled);

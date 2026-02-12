@@ -97,6 +97,7 @@ export interface TenantConfig {
     admissions: boolean;
     media: boolean;
     contact: boolean;
+    brochureBuilder: boolean;
   };
 
   hero: {

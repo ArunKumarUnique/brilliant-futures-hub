@@ -41,6 +41,7 @@ const config: TenantConfig = {
     'nav.admissions': 'Enroll',
     'nav.media': 'Gallery',
     'nav.contact': 'Contact',
+    'nav.brochure': 'Brochure',
     'hero.enquire': 'Get Started',
     'hero.admissions': 'Enrollment Open 2026–27',
     'why.title': 'Why Excel Academy?',
@@ -80,6 +81,7 @@ const config: TenantConfig = {
     admissions: true,
     media: true,
     contact: true,
+    brochureBuilder: true,
   },
 
   hero: {
