@@ -95,7 +95,6 @@ const config: TenantConfig = {
       {
         id: 'jee-package',
         title: { en: 'State Board + JEE Mains & Advanced', te: 'స్టేట్ బోర్డ్ + JEE మెయిన్స్ & అడ్వాన్స్‌డ్' },
-        popular: true,
         pricing: [
           { class: { en: '8th Class', te: '8వ తరగతి' }, fee: '₹1000 / month' },
           { class: { en: '9th Class', te: '9వ తరగతి' }, fee: '₹1000 / month' },
@@ -105,7 +104,7 @@ const config: TenantConfig = {
       },
       {
         id: 'full-package',
-        title: { en: 'State Board Subjects + Handwriting + Technical Skills + Stage Fear Removal', te: 'స్టేట్ బోర్డ్ సబ్జెక్ట్‌లు + హ్యాండ్‌రైటింగ్ + టెక్నికల్ స్కిల్స్ + స్టేజ్ ఫియర్ రిమూవల్' },
+        title: { en: 'State Board Subjects + Hand Writing + Technical Skills + Stage Fear', te: 'స్టేట్ బోర్డ్ సబ్జెక్ట్‌లు + హ్యాండ్‌రైటింగ్ + టెక్నికల్ స్కిల్స్ + స్టేజ్ ఫియర్' },
         subjects: ['Telugu', 'Hindi', 'English', 'Maths', 'Science', 'Social'],
         pricing: [
           { class: { en: '10th Class', te: '10వ తరగతి' }, fee: '₹1000 / month' },
@@ -114,6 +113,23 @@ const config: TenantConfig = {
           { class: { en: '6th & 7th Class', te: '6 & 7 తరగతి' }, fee: '₹700 / month' },
           { class: { en: '5th Class', te: '5వ తరగతి' }, fee: '₹500 / month' },
           { class: { en: 'Below 4th Class', te: '4వ తరగతి కంటే తక్కువ' }, fee: '₹400 / month' },
+        ],
+      },
+      {
+        id: 'combo-package',
+        title: { en: 'State Board + JEE + Skill Development', te: 'స్టేట్ బోర్డ్ + JEE + స్కిల్ డెవలప్‌మెంట్' },
+        popular: true,
+        subjects: [
+          { en: 'State Board Subjects', te: 'స్టేట్ బోర్డ్ సబ్జెక్ట్‌లు' },
+          { en: 'JEE Preparation', te: 'JEE ప్రిపరేషన్' },
+          { en: 'Hand Writing Improvement', te: 'హ్యాండ్‌రైటింగ్ మెరుగుదల' },
+          { en: 'Technical Skills', te: 'టెక్నికల్ స్కిల్స్' },
+          { en: 'Stage Fear Removal', te: 'స్టేజ్ ఫియర్ రిమూవల్' },
+        ],
+        pricing: [
+          { class: { en: '10th Class', te: '10వ తరగతి' }, fee: '₹1200 / month' },
+          { class: { en: '9th Class', te: '9వ తరగతి' }, fee: '₹1000 / month' },
+          { class: { en: '8th & 7th Class', te: '8 & 7 తరగతి' }, fee: '₹900 / month' },
         ],
       },
     ],
@@ -311,6 +327,11 @@ const config: TenantConfig = {
     },
     secondaryButtonLabel: { en: 'Meet Our Faculty', te: 'ఫ్యాకల్టీని కలవండి' },
     secondaryButtonLink: '/faculty',
+  },
+
+  admin: {
+    email: 'admin@brillianttutorials.in',
+    password: 'BT@admin2026',
   },
 };
 
