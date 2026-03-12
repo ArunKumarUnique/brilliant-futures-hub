@@ -197,4 +197,9 @@ export interface TenantConfig {
     secondaryButtonLabel: Translatable;
     secondaryButtonLink: string;
   };
+
+  admin?: {
+    email: string;
+    password: string;
+  };
 }
