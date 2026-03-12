@@ -328,6 +328,11 @@ const config: TenantConfig = {
     secondaryButtonLabel: { en: 'Meet Our Faculty', te: 'ఫ్యాకల్టీని కలవండి' },
     secondaryButtonLink: '/faculty',
   },
+
+  admin: {
+    email: 'admin@brillianttutorials.in',
+    password: 'BT@admin2026',
+  },
 };
 
 export default config;
