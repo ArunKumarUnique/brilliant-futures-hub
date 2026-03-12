@@ -41,6 +41,7 @@ const config: TenantConfig = {
     'nav.admissions': { en: 'Admissions', te: 'ప్రవేశాలు' },
     'nav.media': { en: 'Media', te: 'మీడియా' },
     'nav.contact': { en: 'Contact', te: 'సంప్రదించండి' },
+    'nav.packages': { en: 'Packages', te: 'ప్యాకేజీలు' },
     'nav.brochure': { en: 'Brochure', te: 'బ్రోచర్' },
     'hero.enquire': { en: 'Enquire Now', te: 'ఇప్పుడు విచారించండి' },
     'hero.admissions': { en: 'Admissions Open 2026–27', te: 'ప్రవేశాలు 2026–27' },

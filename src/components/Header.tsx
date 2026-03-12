@@ -16,6 +16,7 @@ const Header = () => {
     { path: '/admissions', label: t('nav.admissions'), enabled: config.pages.admissions },
     { path: '/media', label: t('nav.media'), enabled: config.pages.media },
     { path: '/contact', label: t('nav.contact'), enabled: config.pages.contact },
+    { path: '/packages', label: t('nav.packages'), enabled: config.pages.packages },
     { path: '/brochure-builder', label: t('nav.brochure'), enabled: config.pages.brochureBuilder },
   ];
 

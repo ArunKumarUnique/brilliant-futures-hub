@@ -24,6 +24,7 @@ const AppRoutes = () => {
           {config.pages.admissions && <Route path="/admissions" element={<Admissions />} />}
           {config.pages.media && <Route path="/media" element={<Media />} />}
           {config.pages.contact && <Route path="/contact" element={<Contact />} />}
+          {config.pages.packages && <Route path="/packages" element={<Packages />} />}
           {config.pages.brochureBuilder && <Route path="/brochure-builder" element={<BrochureBuilder />} />}
           <Route path="*" element={<NotFound />} />
         </Routes>

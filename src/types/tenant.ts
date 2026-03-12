@@ -111,6 +111,15 @@ export interface TenantConfig {
     media: boolean;
     contact: boolean;
     brochureBuilder: boolean;
+    packages: boolean;
+  };
+
+  packages?: {
+    title: Translatable;
+    subtitle: Translatable;
+    items: TuitionPackage[];
+    ctaLabel: Translatable;
+    ctaLink: string;
   };
 
   hero: {
