@@ -82,6 +82,7 @@ const config: TenantConfig = {
     media: true,
     contact: true,
     brochureBuilder: true,
+    packages: false,
   },
 
   hero: {

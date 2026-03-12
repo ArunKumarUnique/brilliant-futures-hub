@@ -41,6 +41,7 @@ const config: TenantConfig = {
     'nav.admissions': { en: 'Admissions', te: 'ప్రవేశాలు' },
     'nav.media': { en: 'Media', te: 'మీడియా' },
     'nav.contact': { en: 'Contact', te: 'సంప్రదించండి' },
+    'nav.packages': { en: 'Packages', te: 'ప్యాకేజీలు' },
     'nav.brochure': { en: 'Brochure', te: 'బ్రోచర్' },
     'hero.enquire': { en: 'Enquire Now', te: 'ఇప్పుడు విచారించండి' },
     'hero.admissions': { en: 'Admissions Open 2026–27', te: 'ప్రవేశాలు 2026–27' },
@@ -82,6 +83,40 @@ const config: TenantConfig = {
     media: true,
     contact: true,
     brochureBuilder: true,
+    packages: true,
+  },
+
+  packages: {
+    title: { en: 'Our Packages', te: 'మా ప్యాకేజీలు' },
+    subtitle: { en: 'Affordable tuition packages designed for every student', te: 'ప్రతి విద్యార్థి కోసం రూపొందించబడిన అందుబాటు ట్యూషన్ ప్యాకేజీలు' },
+    ctaLabel: { en: 'Enquire Now', te: 'ఇప్పుడు విచారించండి' },
+    ctaLink: '/contact',
+    items: [
+      {
+        id: 'jee-package',
+        title: { en: 'State Board + JEE Mains & Advanced', te: 'స్టేట్ బోర్డ్ + JEE మెయిన్స్ & అడ్వాన్స్‌డ్' },
+        popular: true,
+        pricing: [
+          { class: { en: '8th Class', te: '8వ తరగతి' }, fee: '₹1000 / month' },
+          { class: { en: '9th Class', te: '9వ తరగతి' }, fee: '₹1000 / month' },
+          { class: { en: '6th Class', te: '6వ తరగతి' }, fee: '₹800 / month' },
+          { class: { en: '7th Class', te: '7వ తరగతి' }, fee: '₹800 / month' },
+        ],
+      },
+      {
+        id: 'full-package',
+        title: { en: 'State Board Subjects + Handwriting + Technical Skills + Stage Fear Removal', te: 'స్టేట్ బోర్డ్ సబ్జెక్ట్‌లు + హ్యాండ్‌రైటింగ్ + టెక్నికల్ స్కిల్స్ + స్టేజ్ ఫియర్ రిమూవల్' },
+        subjects: ['Telugu', 'Hindi', 'English', 'Maths', 'Science', 'Social'],
+        pricing: [
+          { class: { en: '10th Class', te: '10వ తరగతి' }, fee: '₹1000 / month' },
+          { class: { en: '9th Class', te: '9వ తరగతి' }, fee: '₹900 / month' },
+          { class: { en: '8th Class', te: '8వ తరగతి' }, fee: '₹800 / month' },
+          { class: { en: '6th & 7th Class', te: '6 & 7 తరగతి' }, fee: '₹700 / month' },
+          { class: { en: '5th Class', te: '5వ తరగతి' }, fee: '₹500 / month' },
+          { class: { en: 'Below 4th Class', te: '4వ తరగతి కంటే తక్కువ' }, fee: '₹400 / month' },
+        ],
+      },
+    ],
   },
 
   hero: {
