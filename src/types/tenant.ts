@@ -75,6 +75,19 @@ export interface AchievementItem {
   description: Translatable;
 }
 
+export interface PackagePricing {
+  class: Translatable;
+  fee: Translatable;
+}
+
+export interface TuitionPackage {
+  id: string;
+  title: Translatable;
+  subjects?: Translatable[];
+  pricing: PackagePricing[];
+  popular?: boolean;
+}
+
 export interface TenantConfig {
   id: string;
   instituteName: string;
