@@ -4,6 +4,7 @@ const config: TenantConfig = {
   id: 'brilliant-tutorials',
   instituteName: 'Brilliant Tutorials',
   instituteNameParts: ['Brilliant', 'Tutorials'],
+  logo: '/tenants/brilliant-tutorials/logo.png',
   academicYear: '2026–27',
 
   theme: {

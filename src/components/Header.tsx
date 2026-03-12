@@ -30,9 +30,13 @@ const Header = () => {
         <div className="flex items-center justify-between h-16 md:h-20 px-4">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="bg-primary rounded-lg p-2">
-              <GraduationCap className="h-6 w-6 text-primary-foreground" />
-            </div>
+            {config.logo ? (
+              <img src={config.logo} alt={config.instituteName} className="h-10 md:h-14 w-auto" />
+            ) : (
+              <div className="bg-primary rounded-lg p-2">
+                <GraduationCap className="h-6 w-6 text-primary-foreground" />
+              </div>
+            )}
             <div>
               {config.instituteNameParts ? (
                 <>
