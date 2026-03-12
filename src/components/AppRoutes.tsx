@@ -8,6 +8,7 @@ import Admissions from '@/pages/Admissions';
 import Media from '@/pages/Media';
 import Contact from '@/pages/Contact';
 import BrochureBuilder from '@/pages/BrochureBuilder';
+import Packages from '@/pages/Packages';
 import NotFound from '@/pages/NotFound';
 
 const AppRoutes = () => {
