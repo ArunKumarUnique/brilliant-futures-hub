@@ -14,7 +14,110 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      fee_records: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          month: number
+          notes: string | null
+          paid_date: string | null
+          payment_method: string | null
+          status: string
+          student_id: string
+          year: number
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          month: number
+          notes?: string | null
+          paid_date?: string | null
+          payment_method?: string | null
+          status?: string
+          student_id: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          month?: number
+          notes?: string | null
+          paid_date?: string | null
+          payment_method?: string | null
+          status?: string
+          student_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fee_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          admission_date: string | null
+          class: string
+          created_at: string | null
+          id: string
+          monthly_fee: number
+          notes: string | null
+          package_id: string
+          parent_email: string | null
+          parent_mobile: string
+          parent_name: string | null
+          status: string
+          student_email: string | null
+          student_mobile: string | null
+          student_name: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          admission_date?: string | null
+          class: string
+          created_at?: string | null
+          id?: string
+          monthly_fee?: number
+          notes?: string | null
+          package_id: string
+          parent_email?: string | null
+          parent_mobile: string
+          parent_name?: string | null
+          status?: string
+          student_email?: string | null
+          student_mobile?: string | null
+          student_name: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          admission_date?: string | null
+          class?: string
+          created_at?: string | null
+          id?: string
+          monthly_fee?: number
+          notes?: string | null
+          package_id?: string
+          parent_email?: string | null
+          parent_mobile?: string
+          parent_name?: string | null
+          status?: string
+          student_email?: string | null
+          student_mobile?: string | null
+          student_name?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
