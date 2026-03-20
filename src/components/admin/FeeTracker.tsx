@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { Check, ArrowLeft } from 'lucide-react';
+import { Check, Undo2, ArrowLeft } from 'lucide-react';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -35,6 +36,7 @@ const FeeTracker = ({ studentId, studentName, monthlyFee, year, onBack }: FeeTra
   const [fees, setFees] = useState<FeeRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [markPaidMonth, setMarkPaidMonth] = useState<number | null>(null);
+  const [revertMonth, setRevertMonth] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [paidDate, setPaidDate] = useState(new Date().toISOString().split('T')[0]);
 
@@ -66,32 +68,40 @@ const FeeTracker = ({ studentId, studentName, monthlyFee, year, onBack }: FeeTra
         .from('fee_records')
         .update({ status: 'paid', paid_date: paidDate, payment_method: paymentMethod })
         .eq('id', existing.id);
-      if (error) {
-        toast({ title: 'Error', description: error.message, variant: 'destructive' });
-        return;
-      }
+      if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
     } else {
       const { error } = await supabase
         .from('fee_records')
-        .insert({
-          student_id: studentId,
-          month: markPaidMonth,
-          year,
-          amount: monthlyFee,
-          status: 'paid',
-          paid_date: paidDate,
-          payment_method: paymentMethod,
-        });
-      if (error) {
-        toast({ title: 'Error', description: error.message, variant: 'destructive' });
-        return;
-      }
+        .insert({ student_id: studentId, month: markPaidMonth, year, amount: monthlyFee, status: 'paid', paid_date: paidDate, payment_method: paymentMethod });
+      if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
     }
 
-    toast({ title: 'Success', description: `Fee marked as paid for ${MONTHS[markPaidMonth - 1]}` });
+    toast({ title: 'Fee marked as paid', description: `${MONTHS[markPaidMonth - 1]} ${year}` });
     setMarkPaidMonth(null);
     fetchFees();
   };
+
+  const handleRevert = async () => {
+    if (revertMonth === null) return;
+    const existing = getFeeForMonth(revertMonth);
+    if (!existing) return;
+
+    const { error } = await supabase
+      .from('fee_records')
+      .update({ status: 'pending', paid_date: null, payment_method: null })
+      .eq('id', existing.id);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Fee reverted to pending', description: `${MONTHS[revertMonth - 1]} ${year}` });
+    }
+    setRevertMonth(null);
+    fetchFees();
+  };
+
+  const paidCount = fees.filter(f => f.status === 'paid').length;
+  const totalPaid = fees.filter(f => f.status === 'paid').reduce((s, f) => s + Number(f.amount), 0);
 
   return (
     <div>
@@ -99,19 +109,19 @@ const FeeTracker = ({ studentId, studentName, monthlyFee, year, onBack }: FeeTra
         <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="w-4 h-4" /></Button>
         <div>
           <h2 className="text-xl font-bold text-foreground">{studentName} – Fee Tracker</h2>
-          <p className="text-sm text-muted-foreground">Year: {year} | Monthly Fee: ₹{monthlyFee}</p>
+          <p className="text-sm text-muted-foreground">Year: {year} | Monthly Fee: ₹{monthlyFee} | Paid: {paidCount}/12 (₹{totalPaid.toLocaleString()})</p>
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="bg-card border border-border rounded-xl overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Month</TableHead>
               <TableHead>Fee</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Paid Date</TableHead>
-              <TableHead>Method</TableHead>
+              <TableHead className="hidden sm:table-cell">Paid Date</TableHead>
+              <TableHead className="hidden sm:table-cell">Method</TableHead>
               <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
@@ -131,10 +141,14 @@ const FeeTracker = ({ studentId, studentName, monthlyFee, year, onBack }: FeeTra
                         {isPaid ? 'Paid' : 'Pending'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{fee?.paid_date || '—'}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground capitalize">{fee?.payment_method || '—'}</TableCell>
+                    <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">{fee?.paid_date || '—'}</TableCell>
+                    <TableCell className="hidden sm:table-cell text-sm text-muted-foreground capitalize">{fee?.payment_method || '—'}</TableCell>
                     <TableCell>
-                      {!isPaid && (
+                      {isPaid ? (
+                        <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => setRevertMonth(idx + 1)}>
+                          <Undo2 className="w-3 h-3 mr-1" /> Revert
+                        </Button>
+                      ) : (
                         <Button size="sm" variant="outline" onClick={() => { setMarkPaidMonth(idx + 1); setPaidDate(new Date().toISOString().split('T')[0]); }}>
                           <Check className="w-3 h-3 mr-1" /> Mark Paid
                         </Button>
@@ -148,6 +162,7 @@ const FeeTracker = ({ studentId, studentName, monthlyFee, year, onBack }: FeeTra
         </Table>
       </div>
 
+      {/* Mark Paid Dialog */}
       <Dialog open={markPaidMonth !== null} onOpenChange={v => !v && setMarkPaidMonth(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -177,6 +192,20 @@ const FeeTracker = ({ studentId, studentName, monthlyFee, year, onBack }: FeeTra
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Revert Confirmation */}
+      <AlertDialog open={revertMonth !== null} onOpenChange={v => !v && setRevertMonth(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revert payment for {revertMonth ? MONTHS[revertMonth - 1] : ''}?</AlertDialogTitle>
+            <AlertDialogDescription>This will mark the fee as pending and remove the payment date and method.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRevert} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Revert to Pending</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
