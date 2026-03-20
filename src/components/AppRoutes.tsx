@@ -3,6 +3,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { AdminProvider } from '@/contexts/AdminContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import MobileCTA from '@/components/MobileCTA';
 import Index from '@/pages/Index';
 import Faculty from '@/pages/Faculty';
 import Admissions from '@/pages/Admissions';
