@@ -9,21 +9,49 @@ interface Props {
 
 const AchievementBanner = ({ config, content }: Props) => {
   const websiteUrl = config.seo.canonical || `https://${config.id}.lovable.app`;
+  const logoPath = config.logo || '';
 
   return (
     <div
       className="relative w-full h-full flex flex-col overflow-hidden"
-      style={{ background: `hsl(${config.theme.background})`, fontFamily: config.theme.fontFamily }}
+      style={{ fontFamily: config.theme.fontFamily }}
     >
-      {/* Top gradient bar */}
-      <div className="h-2" style={{ background: `linear-gradient(90deg, hsl(${config.theme.primary}), hsl(${config.theme.secondary}))` }} />
+      {/* Gradient background */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `
+            radial-gradient(ellipse at 80% 20%, hsl(${config.theme.primary} / 0.1) 0%, transparent 50%),
+            linear-gradient(135deg, hsl(${config.theme.background}) 0%, hsl(${config.theme.muted}) 100%)
+          `,
+        }}
+      />
 
-      <div className="flex-1 flex">
+      {/* Decorative */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 800 450" fill="none">
+        <ellipse cx="680" cy="380" rx="150" ry="100" fill={`hsl(${config.theme.primary})`} opacity="0.03" />
+        <path d="M0 400 Q400 360 800 390" stroke={`hsl(${config.theme.secondary})`} strokeWidth="0.6" opacity="0.08" />
+      </svg>
+
+      {/* Watermark */}
+      {logoPath && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <img src={logoPath} alt="" className="w-[200px] h-auto" style={{ opacity: 0.04, filter: 'grayscale(100%) brightness(2)' }} crossOrigin="anonymous" />
+        </div>
+      )}
+
+      {/* Top gradient bar */}
+      <div className="h-1.5" style={{ background: `linear-gradient(90deg, hsl(${config.theme.primary}), hsl(${config.theme.secondary}))` }} />
+
+      <div className="relative z-10 flex-1 flex">
         {/* Left: content */}
         <div className="flex-1 flex flex-col justify-center px-6 py-4">
-          <p className="text-[10px] font-bold tracking-wider uppercase mb-2" style={{ color: `hsl(${config.theme.primary})` }}>
-            {config.instituteName} • Achievements
-          </p>
+          <div className="flex items-center gap-2 mb-2">
+            {logoPath && <img src={logoPath} alt="" className="h-6 w-auto" crossOrigin="anonymous" />}
+            <p className="text-[10px] font-bold tracking-wider uppercase" style={{ color: `hsl(${config.theme.primary})` }}>
+              {config.instituteName} • Achievements
+            </p>
+          </div>
           <h1 className="text-2xl font-extrabold leading-tight mb-2" style={{ color: `hsl(${config.theme.foreground})` }}>
             {content.title || 'Our Milestones'}
           </h1>
@@ -32,10 +60,15 @@ const AchievementBanner = ({ config, content }: Props) => {
           </p>
 
           {content.highlights.filter(Boolean).length > 0 && (
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               {content.highlights.filter(Boolean).map((h, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <span className="text-sm">🏆</span>
+                  <span
+                    className="w-4 h-4 rounded-full flex items-center justify-center text-[9px]"
+                    style={{ background: `hsl(${config.theme.secondary} / 0.15)`, color: `hsl(${config.theme.secondary})` }}
+                  >
+                    🏆
+                  </span>
                   <span className="text-xs font-medium" style={{ color: `hsl(${config.theme.foreground})` }}>{h}</span>
                 </div>
               ))}
@@ -46,7 +79,9 @@ const AchievementBanner = ({ config, content }: Props) => {
         {/* Right: stats & QR */}
         <div
           className="w-44 flex flex-col items-center justify-center gap-3 px-4"
-          style={{ background: `hsl(${config.theme.primary})` }}
+          style={{
+            background: `linear-gradient(180deg, hsl(${config.theme.primary}), hsl(${config.theme.primary} / 0.9))`,
+          }}
         >
           {config.admissions.stats.slice(0, 3).map((s, i) => (
             <div key={i} className="text-center">
@@ -54,8 +89,11 @@ const AchievementBanner = ({ config, content }: Props) => {
               <p className="text-[9px] text-white/70">{typeof s.label === 'string' ? s.label : s.label.en || Object.values(s.label)[0]}</p>
             </div>
           ))}
-          <div className="bg-white p-1 rounded mt-1">
-            <QRCodeSVG value={websiteUrl} size={36} level="M" />
+          <div className="flex flex-col items-center gap-0.5 mt-1">
+            <div className="bg-white p-1.5 rounded-md shadow-sm">
+              <QRCodeSVG value={websiteUrl} size={36} level="M" />
+            </div>
+            <span className="text-[7px] text-white/50">Scan to Visit</span>
           </div>
         </div>
       </div>

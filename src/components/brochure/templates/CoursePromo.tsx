@@ -9,30 +9,52 @@ interface Props {
 
 const CoursePromo = ({ config, content }: Props) => {
   const websiteUrl = config.seo.canonical || `https://${config.id}.lovable.app`;
+  const logoPath = config.logo || '';
 
   return (
     <div
       className="relative w-full h-full flex flex-col overflow-hidden"
       style={{ fontFamily: config.theme.fontFamily }}
     >
-      {/* Top section */}
+      {/* Top section with gradient */}
       <div
-        className="px-6 pt-6 pb-8"
-        style={{ background: `linear-gradient(135deg, hsl(${config.theme.primary}), hsl(${config.theme.primary} / 0.85))` }}
+        className="relative px-6 pt-5 pb-8"
+        style={{
+          background: `
+            radial-gradient(ellipse at 80% 0%, hsl(${config.theme.secondary} / 0.25) 0%, transparent 50%),
+            linear-gradient(160deg, hsl(${config.theme.primary}) 0%, hsl(${config.theme.primary} / 0.88) 100%)
+          `,
+        }}
       >
-        <p className="text-[10px] font-bold tracking-wider uppercase text-white/60 mb-3">
-          {config.instituteName}
-        </p>
-        <h1 className="text-2xl font-extrabold text-white leading-tight mb-1">
+        {/* Decorative */}
+        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 600 200" fill="none">
+          <ellipse cx="520" cy="30" rx="80" ry="80" fill="white" opacity="0.05" />
+        </svg>
+
+        <div className="relative z-10 flex items-center gap-2 mb-3">
+          {logoPath && <img src={logoPath} alt="" className="h-7 w-auto" crossOrigin="anonymous" />}
+          <p className="text-[10px] font-bold tracking-wider uppercase text-white/70">
+            {config.instituteName}
+          </p>
+        </div>
+        <h1 className="relative z-10 text-2xl font-extrabold text-white leading-tight mb-1">
           {content.title || content.featuredSubject || 'Course Highlight'}
         </h1>
-        <p className="text-xs text-white/75">
+        <p className="relative z-10 text-xs text-white/75">
           {content.academicYear || config.academicYear}
         </p>
       </div>
 
       {/* Middle - content */}
-      <div className="flex-1 px-6 py-5 flex flex-col justify-center" style={{ background: `hsl(${config.theme.background})` }}>
+      <div
+        className="relative flex-1 px-6 py-5 flex flex-col justify-center"
+        style={{
+          background: `
+            radial-gradient(ellipse at 20% 80%, hsl(${config.theme.primary} / 0.04) 0%, transparent 50%),
+            hsl(${config.theme.background})
+          `,
+        }}
+      >
         <p className="text-sm font-medium mb-4" style={{ color: `hsl(${config.theme.foreground})` }}>
           {content.subtitle || 'Expert coaching designed for success.'}
         </p>
@@ -42,10 +64,10 @@ const CoursePromo = ({ config, content }: Props) => {
             {content.highlights.filter(Boolean).map((h, i) => (
               <div
                 key={i}
-                className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg"
+                className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-2 rounded-lg"
                 style={{
-                  background: `hsl(${config.theme.primary} / 0.08)`,
-                  color: `hsl(${config.theme.primary})`,
+                  background: `hsl(${i % 2 === 0 ? config.theme.primary : config.theme.secondary} / 0.08)`,
+                  color: `hsl(${i % 2 === 0 ? config.theme.primary : config.theme.secondary})`,
                 }}
               >
                 <span className="text-xs">▸</span> {h}
@@ -56,8 +78,12 @@ const CoursePromo = ({ config, content }: Props) => {
 
         {content.ctaText && (
           <div
-            className="self-start px-4 py-2 rounded-lg text-xs font-bold"
-            style={{ background: `hsl(${config.theme.primary})`, color: `hsl(${config.theme.primaryForeground})` }}
+            className="self-start px-5 py-2 rounded-full text-xs font-bold"
+            style={{
+              background: `linear-gradient(135deg, hsl(${config.theme.primary}), hsl(${config.theme.primary} / 0.9))`,
+              color: `hsl(${config.theme.primaryForeground})`,
+              boxShadow: `0 3px 10px hsl(${config.theme.primary} / 0.25)`,
+            }}
           >
             {content.ctaText}
           </div>
@@ -65,10 +91,19 @@ const CoursePromo = ({ config, content }: Props) => {
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-3 flex items-center justify-between" style={{ background: `hsl(${config.theme.muted})` }}>
-        <p className="text-[10px]" style={{ color: `hsl(${config.theme.mutedForeground})` }}>📞 {config.contact.phone}</p>
-        <div className="bg-white p-1 rounded border" style={{ borderColor: `hsl(${config.theme.border})` }}>
-          <QRCodeSVG value={websiteUrl} size={36} level="M" />
+      <div
+        className="px-6 py-3 flex items-center justify-between"
+        style={{ background: `hsl(${config.theme.muted})` }}
+      >
+        <div>
+          <p className="text-[10px]" style={{ color: `hsl(${config.theme.mutedForeground})` }}>📞 {config.contact.phone}</p>
+          <p className="text-[9px]" style={{ color: `hsl(${config.theme.mutedForeground})` }}>📧 {config.contact.email}</p>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[7px]" style={{ color: `hsl(${config.theme.mutedForeground})` }}>Scan</span>
+          <div className="bg-white p-1 rounded shadow-sm border" style={{ borderColor: `hsl(${config.theme.border})` }}>
+            <QRCodeSVG value={websiteUrl} size={32} level="M" />
+          </div>
         </div>
       </div>
     </div>

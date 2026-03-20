@@ -9,6 +9,7 @@ interface Props {
 
 const PromoCard = ({ config, content }: Props) => {
   const websiteUrl = config.seo.canonical || `https://${config.id}.lovable.app`;
+  const logoPath = config.logo || '';
   const bgImage = content.selectedGalleryImage || config.hero.images[0];
 
   return (
@@ -21,30 +22,48 @@ const PromoCard = ({ config, content }: Props) => {
         <img src={bgImage} alt="" className="w-full h-full object-cover" crossOrigin="anonymous" />
         <div
           className="absolute inset-0"
-          style={{ background: `linear-gradient(to top, hsl(${config.theme.primary} / 0.95), hsl(${config.theme.primary} / 0.5) 50%, hsl(${config.theme.primary} / 0.3))` }}
+          style={{
+            background: `
+              linear-gradient(to top, hsl(${config.theme.primary}) 0%, hsl(${config.theme.primary} / 0.85) 35%, hsl(${config.theme.primary} / 0.4) 65%, hsl(${config.theme.primary} / 0.2) 100%)
+            `,
+          }}
         />
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 flex-1 flex flex-col justify-end p-8">
+      {/* Decorative accents */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 600 600" fill="none">
+        <ellipse cx="520" cy="80" rx="100" ry="100" fill={`hsl(${config.theme.secondary})`} opacity="0.1" />
+        <path d="M0 380 Q300 340 600 370" stroke="white" strokeWidth="0.6" opacity="0.1" />
+      </svg>
+
+      {/* Top logo bar */}
+      <div className="relative z-10 px-6 pt-5 flex items-center gap-2">
+        {logoPath && <img src={logoPath} alt="" className="h-8 w-auto" crossOrigin="anonymous" />}
         <span
-          className="self-start text-[10px] font-bold px-3 py-1 rounded-full mb-3"
+          className="text-[10px] font-bold px-3 py-1 rounded-full"
           style={{ background: `hsl(${config.theme.secondary})`, color: `hsl(${config.theme.secondaryForeground})` }}
         >
           {config.instituteName}
         </span>
+      </div>
 
+      {/* Content */}
+      <div className="relative z-10 flex-1 flex flex-col justify-end p-8">
         <h1 className="text-2xl font-extrabold leading-tight mb-2 text-white">
           {content.title || config.instituteName}
         </h1>
-        <p className="text-sm text-white/85 leading-relaxed mb-4">
+        <p className="text-sm text-white/85 leading-relaxed mb-4 max-w-[90%]">
           {content.subtitle || 'Quality education for a brighter future.'}
         </p>
 
         {content.ctaText && (
           <div
-            className="self-start px-4 py-2 rounded-lg text-sm font-bold"
-            style={{ background: `hsl(${config.theme.secondary})`, color: `hsl(${config.theme.secondaryForeground})` }}
+            className="self-start px-5 py-2 rounded-full text-sm font-bold"
+            style={{
+              background: `linear-gradient(135deg, hsl(${config.theme.secondary}), hsl(${config.theme.secondary} / 0.85))`,
+              color: `hsl(${config.theme.secondaryForeground})`,
+              boxShadow: `0 4px 12px hsl(${config.theme.secondary} / 0.3)`,
+            }}
           >
             {content.ctaText}
           </div>
@@ -52,10 +71,16 @@ const PromoCard = ({ config, content }: Props) => {
       </div>
 
       {/* Bottom strip */}
-      <div className="relative z-10 px-8 py-3 flex items-center justify-between" style={{ background: `hsl(${config.theme.primary})` }}>
-        <p className="text-[10px] text-white/80">📞 {config.contact.phone}</p>
-        <div className="bg-white p-1 rounded">
-          <QRCodeSVG value={websiteUrl} size={36} level="M" />
+      <div
+        className="relative z-10 px-6 py-3 flex items-center justify-between"
+        style={{ background: `hsl(${config.theme.primary} / 0.95)`, backdropFilter: 'blur(4px)' }}
+      >
+        <p className="text-[10px] text-white/80 flex items-center gap-1">📞 {config.contact.phone}</p>
+        <div className="flex items-center gap-2">
+          <span className="text-[8px] text-white/50">Scan to Visit</span>
+          <div className="bg-white p-1 rounded shadow-sm">
+            <QRCodeSVG value={websiteUrl} size={32} level="M" />
+          </div>
         </div>
       </div>
     </div>
