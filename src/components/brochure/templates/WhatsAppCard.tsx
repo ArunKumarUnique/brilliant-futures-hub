@@ -10,6 +10,8 @@ interface Props {
 const WhatsAppCard = ({ config, content }: Props) => {
   const websiteUrl = config.seo.canonical || `https://${config.id}.lovable.app`;
   const logoPath = config.logo || '';
+  const founderImage = content.showFounderImage ? config.founderImage : undefined;
+  const founderLabel = config.founderLabel || 'Expert Faculty';
 
   return (
     <div
@@ -52,6 +54,23 @@ const WhatsAppCard = ({ config, content }: Props) => {
           <span>📞 {config.contact.phone}</span>
         </div>
       </div>
+
+      {/* Founder image - between content and QR */}
+      {founderImage && (
+        <div className="relative z-10 flex flex-col items-center justify-center px-3">
+          <img
+            src={founderImage}
+            alt="Founder"
+            className="w-[80px] h-[80px] object-cover object-top rounded-full"
+            style={{
+              border: `2px solid hsl(${config.theme.secondary})`,
+              boxShadow: `0 4px 15px rgba(0,0,0,0.3)`,
+            }}
+            crossOrigin="anonymous"
+          />
+          <span className="text-[7px] text-white/60 mt-1 font-bold">{founderLabel}</span>
+        </div>
+      )}
 
       {/* Right side */}
       <div
