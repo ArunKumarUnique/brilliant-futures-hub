@@ -21,6 +21,7 @@ const defaultContent: BrochureContent = {
   featuredSubject: '',
   selectedFacultyId: '',
   selectedGalleryImage: '',
+  showFounderImage: true,
 };
 
 const BrochureBuilder = () => {
