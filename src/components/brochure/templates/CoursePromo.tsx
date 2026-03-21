@@ -10,6 +10,8 @@ interface Props {
 const CoursePromo = ({ config, content }: Props) => {
   const websiteUrl = config.seo.canonical || `https://${config.id}.lovable.app`;
   const logoPath = config.logo || '';
+  const founderImage = content.showFounderImage ? config.founderImage : undefined;
+  const founderLabel = config.founderLabel || 'Expert Faculty';
 
   return (
     <div
@@ -26,7 +28,6 @@ const CoursePromo = ({ config, content }: Props) => {
           `,
         }}
       >
-        {/* Decorative */}
         <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 600 200" fill="none">
           <ellipse cx="520" cy="30" rx="80" ry="80" fill="white" opacity="0.05" />
         </svg>
@@ -45,9 +46,9 @@ const CoursePromo = ({ config, content }: Props) => {
         </p>
       </div>
 
-      {/* Middle - content */}
+      {/* Middle - content with optional founder */}
       <div
-        className="relative flex-1 px-6 py-5 flex flex-col justify-center"
+        className="relative flex-1 flex"
         style={{
           background: `
             radial-gradient(ellipse at 20% 80%, hsl(${config.theme.primary} / 0.04) 0%, transparent 50%),
@@ -55,37 +56,66 @@ const CoursePromo = ({ config, content }: Props) => {
           `,
         }}
       >
-        <p className="text-sm font-medium mb-4" style={{ color: `hsl(${config.theme.foreground})` }}>
-          {content.subtitle || 'Expert coaching designed for success.'}
-        </p>
+        <div className={`flex flex-col justify-center px-6 py-5 ${founderImage ? 'flex-1' : 'w-full'}`}>
+          <p className="text-sm font-medium mb-4" style={{ color: `hsl(${config.theme.foreground})` }}>
+            {content.subtitle || 'Expert coaching designed for success.'}
+          </p>
 
-        {content.highlights.filter(Boolean).length > 0 && (
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            {content.highlights.filter(Boolean).map((h, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-2 rounded-lg"
+          {content.highlights.filter(Boolean).length > 0 && (
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {content.highlights.filter(Boolean).map((h, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-2 rounded-lg"
+                  style={{
+                    background: `hsl(${i % 2 === 0 ? config.theme.primary : config.theme.secondary} / 0.08)`,
+                    color: `hsl(${i % 2 === 0 ? config.theme.primary : config.theme.secondary})`,
+                  }}
+                >
+                  <span className="text-xs">▸</span> {h}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {content.ctaText && (
+            <div
+              className="self-start px-5 py-2 rounded-full text-xs font-bold"
+              style={{
+                background: `linear-gradient(135deg, hsl(${config.theme.primary}), hsl(${config.theme.primary} / 0.9))`,
+                color: `hsl(${config.theme.primaryForeground})`,
+                boxShadow: `0 3px 10px hsl(${config.theme.primary} / 0.25)`,
+              }}
+            >
+              {content.ctaText}
+            </div>
+          )}
+        </div>
+
+        {/* Founder image - bottom-right card style */}
+        {founderImage && (
+          <div className="w-[150px] flex flex-col items-center justify-end pr-4 pb-3 relative flex-shrink-0">
+            <div className="relative flex flex-col items-center">
+              <img
+                src={founderImage}
+                alt="Founder"
+                className="w-[120px] h-[120px] object-cover object-top rounded-2xl"
                 style={{
-                  background: `hsl(${i % 2 === 0 ? config.theme.primary : config.theme.secondary} / 0.08)`,
-                  color: `hsl(${i % 2 === 0 ? config.theme.primary : config.theme.secondary})`,
+                  border: `2px solid hsl(${config.theme.primary} / 0.2)`,
+                  boxShadow: `0 6px 20px hsl(${config.theme.primary} / 0.15)`,
+                }}
+                crossOrigin="anonymous"
+              />
+              <span
+                className="text-[8px] font-bold px-2 py-0.5 rounded-full mt-1.5"
+                style={{
+                  background: `hsl(${config.theme.primary} / 0.1)`,
+                  color: `hsl(${config.theme.primary})`,
                 }}
               >
-                <span className="text-xs">▸</span> {h}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {content.ctaText && (
-          <div
-            className="self-start px-5 py-2 rounded-full text-xs font-bold"
-            style={{
-              background: `linear-gradient(135deg, hsl(${config.theme.primary}), hsl(${config.theme.primary} / 0.9))`,
-              color: `hsl(${config.theme.primaryForeground})`,
-              boxShadow: `0 3px 10px hsl(${config.theme.primary} / 0.25)`,
-            }}
-          >
-            {content.ctaText}
+                {founderLabel}
+              </span>
+            </div>
           </div>
         )}
       </div>

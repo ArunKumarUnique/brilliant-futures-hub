@@ -93,6 +93,8 @@ export interface TenantConfig {
   instituteName: string;
   instituteNameParts?: [string, string];
   logo?: string;
+  founderImage?: string;
+  founderLabel?: string;
   academicYear: string;
 
   theme: TenantTheme;

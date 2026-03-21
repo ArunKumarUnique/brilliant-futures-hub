@@ -11,6 +11,8 @@ const InstagramStory = ({ config, content }: Props) => {
   const websiteUrl = config.seo.canonical || `https://${config.id}.lovable.app`;
   const logoPath = config.logo || '';
   const bgImage = content.selectedGalleryImage || config.hero.images[0];
+  const founderImage = content.showFounderImage ? config.founderImage : undefined;
+  const founderLabel = config.founderLabel || 'Expert Faculty';
 
   return (
     <div
@@ -47,6 +49,38 @@ const InstagramStory = ({ config, content }: Props) => {
         {logoPath && <img src={logoPath} alt="" className="h-9 w-auto" crossOrigin="anonymous" />}
         <p className="text-[10px] font-bold tracking-widest uppercase text-white/80">{config.instituteName}</p>
       </div>
+
+      {/* Founder image - centered circular */}
+      {founderImage && (
+        <div className="relative z-10 flex justify-center pt-6">
+          <div className="relative">
+            <div
+              className="absolute -inset-2 rounded-full"
+              style={{ background: `radial-gradient(circle, hsl(${config.theme.secondary} / 0.3) 0%, transparent 70%)` }}
+            />
+            <img
+              src={founderImage}
+              alt="Founder"
+              className="relative w-[140px] h-[140px] object-cover object-top rounded-full"
+              style={{
+                border: `3px solid hsl(${config.theme.secondary})`,
+                boxShadow: `0 8px 30px rgba(0,0,0,0.3), 0 0 0 6px hsl(${config.theme.secondary} / 0.15)`,
+              }}
+              crossOrigin="anonymous"
+            />
+            <span
+              className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[8px] font-bold px-3 py-1 rounded-full whitespace-nowrap"
+              style={{
+                background: `hsl(${config.theme.secondary})`,
+                color: `hsl(${config.theme.secondaryForeground})`,
+                boxShadow: `0 2px 8px hsl(${config.theme.secondary} / 0.4)`,
+              }}
+            >
+              {founderLabel}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Center: spacer */}
       <div className="flex-1" />

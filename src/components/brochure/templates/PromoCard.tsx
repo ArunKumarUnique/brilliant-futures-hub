@@ -11,6 +11,8 @@ const PromoCard = ({ config, content }: Props) => {
   const websiteUrl = config.seo.canonical || `https://${config.id}.lovable.app`;
   const logoPath = config.logo || '';
   const bgImage = content.selectedGalleryImage || config.hero.images[0];
+  const founderImage = content.showFounderImage ? config.founderImage : undefined;
+  const founderLabel = config.founderLabel || 'Expert Faculty';
 
   return (
     <div
@@ -46,6 +48,31 @@ const PromoCard = ({ config, content }: Props) => {
           {config.instituteName}
         </span>
       </div>
+
+      {/* Founder image - top right overlay */}
+      {founderImage && (
+        <div className="absolute top-14 right-5 z-20 flex flex-col items-center">
+          <img
+            src={founderImage}
+            alt="Founder"
+            className="w-[100px] h-[100px] object-cover object-top rounded-full"
+            style={{
+              border: `3px solid hsl(${config.theme.secondary})`,
+              boxShadow: `0 6px 20px rgba(0,0,0,0.3), 0 0 0 4px hsl(${config.theme.secondary} / 0.2)`,
+            }}
+            crossOrigin="anonymous"
+          />
+          <span
+            className="text-[7px] font-bold px-2 py-0.5 rounded-full mt-1"
+            style={{
+              background: `hsl(${config.theme.secondary})`,
+              color: `hsl(${config.theme.secondaryForeground})`,
+            }}
+          >
+            {founderLabel}
+          </span>
+        </div>
+      )}
 
       {/* Content */}
       <div className="relative z-10 flex-1 flex flex-col justify-end p-8">

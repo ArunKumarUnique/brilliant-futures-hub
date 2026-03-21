@@ -21,6 +21,7 @@ const defaultContent: BrochureContent = {
   featuredSubject: '',
   selectedFacultyId: '',
   selectedGalleryImage: '',
+  showFounderImage: true,
 };
 
 const BrochureBuilder = () => {
@@ -172,6 +173,25 @@ const BrochureBuilder = () => {
               </TabsContent>
 
               <TabsContent value="media" className="space-y-4 mt-4">
+                {config.founderImage && (
+                  <div className="flex items-center justify-between p-3 rounded-lg border">
+                    <div className="flex items-center gap-3">
+                      <img src={config.founderImage} alt="Founder" className="w-10 h-10 rounded-full object-cover" />
+                      <div>
+                        <p className="text-sm font-medium">Show Founder Image</p>
+                        <p className="text-xs text-muted-foreground">{config.founderLabel || 'Expert Faculty'}</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant={content.showFounderImage ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setContent(prev => ({ ...prev, showFounderImage: !prev.showFounderImage }))}
+                    >
+                      {content.showFounderImage ? 'On' : 'Off'}
+                    </Button>
+                  </div>
+                )}
+
                 {config.faculty.length > 0 && (
                   <div>
                     <Label>Faculty Member</Label>

@@ -25,6 +25,7 @@ export interface BrochureContent {
   featuredSubject: string;
   selectedFacultyId: string;
   selectedGalleryImage: string;
+  showFounderImage: boolean;
 }
 
 export const BROCHURE_TEMPLATES: BrochureTemplate[] = [

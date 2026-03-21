@@ -10,6 +10,8 @@ interface Props {
 const AchievementBanner = ({ config, content }: Props) => {
   const websiteUrl = config.seo.canonical || `https://${config.id}.lovable.app`;
   const logoPath = config.logo || '';
+  const founderImage = content.showFounderImage ? config.founderImage : undefined;
+  const founderLabel = config.founderLabel || 'Expert Faculty';
 
   return (
     <div
@@ -27,7 +29,6 @@ const AchievementBanner = ({ config, content }: Props) => {
         }}
       />
 
-      {/* Decorative */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 800 450" fill="none">
         <ellipse cx="680" cy="380" rx="150" ry="100" fill={`hsl(${config.theme.primary})`} opacity="0.03" />
         <path d="M0 400 Q400 360 800 390" stroke={`hsl(${config.theme.secondary})`} strokeWidth="0.6" opacity="0.08" />
@@ -76,14 +77,31 @@ const AchievementBanner = ({ config, content }: Props) => {
           )}
         </div>
 
-        {/* Right: stats & QR */}
+        {/* Right: founder + stats + QR */}
         <div
-          className="w-44 flex flex-col items-center justify-center gap-3 px-4"
+          className="w-44 flex flex-col items-center justify-center gap-2 px-4"
           style={{
             background: `linear-gradient(180deg, hsl(${config.theme.primary}), hsl(${config.theme.primary} / 0.9))`,
           }}
         >
-          {config.admissions.stats.slice(0, 3).map((s, i) => (
+          {/* Founder image at top of right panel */}
+          {founderImage && (
+            <div className="flex flex-col items-center mb-1">
+              <img
+                src={founderImage}
+                alt="Founder"
+                className="w-[60px] h-[60px] object-cover object-top rounded-full"
+                style={{
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                }}
+                crossOrigin="anonymous"
+              />
+              <span className="text-[7px] text-white/60 mt-0.5">{founderLabel}</span>
+            </div>
+          )}
+
+          {config.admissions.stats.slice(0, founderImage ? 2 : 3).map((s, i) => (
             <div key={i} className="text-center">
               <p className="text-xl font-extrabold text-white">{s.value}</p>
               <p className="text-[9px] text-white/70">{typeof s.label === 'string' ? s.label : s.label.en || Object.values(s.label)[0]}</p>
