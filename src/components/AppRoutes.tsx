@@ -55,6 +55,7 @@ const AppRoutes = () => {
           <Route path="packages" element={<AdminPackages />} />
           <Route path="fees" element={<AdminFees />} />
           <Route path="notifications" element={<AdminNotifications />} />
+          <Route path="brochure-builder" element={<BrochureBuilder />} />
         </Route>
 
         <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />

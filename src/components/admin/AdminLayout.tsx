@@ -12,6 +12,7 @@ const navItems = [
   { label: 'Packages', icon: Package, path: '/admin/packages' },
   { label: 'Fee Tracking', icon: Receipt, path: '/admin/fees' },
   { label: 'Notifications', icon: Bell, path: '/admin/notifications' },
+  { label: 'Brochure Builder', icon: FileImage, path: '/admin/brochure-builder' },
 ];
 
 const SidebarNav = ({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) => {
