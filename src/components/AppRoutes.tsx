@@ -10,6 +10,7 @@ import Admissions from '@/pages/Admissions';
 import Media from '@/pages/Media';
 import Contact from '@/pages/Contact';
 import BrochureBuilder from '@/pages/BrochureBuilder';
+import { lazy } from 'react';
 import Packages from '@/pages/Packages';
 import NotFound from '@/pages/NotFound';
 import AdminLogin from '@/pages/admin/AdminLogin';
