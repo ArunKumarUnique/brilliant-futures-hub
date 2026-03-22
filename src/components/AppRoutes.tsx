@@ -10,6 +10,7 @@ import Admissions from '@/pages/Admissions';
 import Media from '@/pages/Media';
 import Contact from '@/pages/Contact';
 import BrochureBuilder from '@/pages/BrochureBuilder';
+import { lazy } from 'react';
 import Packages from '@/pages/Packages';
 import NotFound from '@/pages/NotFound';
 import AdminLogin from '@/pages/admin/AdminLogin';
@@ -44,7 +45,7 @@ const AppRoutes = () => {
         {config.pages.media && <Route path="/media" element={<PublicLayout><Media /></PublicLayout>} />}
         {config.pages.contact && <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />}
         {config.pages.packages && <Route path="/packages" element={<PublicLayout><Packages /></PublicLayout>} />}
-        {config.pages.brochureBuilder && <Route path="/brochure-builder" element={<PublicLayout><BrochureBuilder /></PublicLayout>} />}
+        
 
         {/* Admin routes */}
         <Route path="/admin" element={<AdminLogin />} />
@@ -54,6 +55,7 @@ const AppRoutes = () => {
           <Route path="packages" element={<AdminPackages />} />
           <Route path="fees" element={<AdminFees />} />
           <Route path="notifications" element={<AdminNotifications />} />
+          <Route path="brochure-builder" element={<BrochureBuilder />} />
         </Route>
 
         <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
