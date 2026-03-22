@@ -45,7 +45,7 @@ const AppRoutes = () => {
         {config.pages.media && <Route path="/media" element={<PublicLayout><Media /></PublicLayout>} />}
         {config.pages.contact && <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />}
         {config.pages.packages && <Route path="/packages" element={<PublicLayout><Packages /></PublicLayout>} />}
-        {config.pages.brochureBuilder && <Route path="/brochure-builder" element={<PublicLayout><BrochureBuilder /></PublicLayout>} />}
+        
 
         {/* Admin routes */}
         <Route path="/admin" element={<AdminLogin />} />
