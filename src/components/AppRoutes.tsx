@@ -58,6 +58,7 @@ const AppRoutes = () => {
           <Route path="fees" element={<AdminFees />} />
           <Route path="notifications" element={<AdminNotifications />} />
           <Route path="attendance" element={<AdminAttendance />} />
+          <Route path="homework" element={<AdminHomework />} />
           <Route path="brochure-builder" element={<BrochureBuilder />} />
         </Route>
 

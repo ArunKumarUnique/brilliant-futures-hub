@@ -13,6 +13,7 @@ const navItems = [
   { label: 'Fee Tracking', icon: Receipt, path: '/admin/fees' },
   { label: 'Notifications', icon: Bell, path: '/admin/notifications' },
   { label: 'Attendance', icon: ClipboardCheck, path: '/admin/attendance' },
+  { label: 'Homework', icon: BookOpen, path: '/admin/homework' },
   { label: 'Brochure Builder', icon: FileImage, path: '/admin/brochure-builder' },
 ];
 
