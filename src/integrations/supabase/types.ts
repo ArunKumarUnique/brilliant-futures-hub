@@ -96,6 +96,56 @@ export type Database = {
           },
         ]
       }
+      homework: {
+        Row: {
+          assigned_date: string
+          class: string
+          created_at: string | null
+          description: string
+          due_date: string | null
+          id: string
+          status: string
+          student_id: string | null
+          subject: string | null
+          tenant_id: string
+          title: string
+        }
+        Insert: {
+          assigned_date?: string
+          class: string
+          created_at?: string | null
+          description: string
+          due_date?: string | null
+          id?: string
+          status?: string
+          student_id?: string | null
+          subject?: string | null
+          tenant_id: string
+          title: string
+        }
+        Update: {
+          assigned_date?: string
+          class?: string
+          created_at?: string | null
+          description?: string
+          due_date?: string | null
+          id?: string
+          status?: string
+          student_id?: string | null
+          subject?: string | null
+          tenant_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homework_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           admission_date: string | null
