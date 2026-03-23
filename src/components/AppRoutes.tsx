@@ -20,6 +20,7 @@ import AdminStudents from '@/pages/admin/AdminStudents';
 import AdminPackages from '@/pages/admin/AdminPackages';
 import AdminFees from '@/pages/admin/AdminFees';
 import AdminNotifications from '@/pages/admin/AdminNotifications';
+import AdminAttendance from '@/pages/admin/AdminAttendance';
 
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen flex flex-col">
@@ -55,6 +56,7 @@ const AppRoutes = () => {
           <Route path="packages" element={<AdminPackages />} />
           <Route path="fees" element={<AdminFees />} />
           <Route path="notifications" element={<AdminNotifications />} />
+          <Route path="attendance" element={<AdminAttendance />} />
           <Route path="brochure-builder" element={<BrochureBuilder />} />
         </Route>
 
