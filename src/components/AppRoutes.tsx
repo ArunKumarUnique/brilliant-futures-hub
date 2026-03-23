@@ -21,6 +21,7 @@ import AdminPackages from '@/pages/admin/AdminPackages';
 import AdminFees from '@/pages/admin/AdminFees';
 import AdminNotifications from '@/pages/admin/AdminNotifications';
 import AdminAttendance from '@/pages/admin/AdminAttendance';
+import AdminHomework from '@/pages/admin/AdminHomework';
 
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen flex flex-col">
