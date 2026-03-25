@@ -16,25 +16,31 @@ export type Database = {
     Tables: {
       attendance: {
         Row: {
+          arrival_time: string | null
           created_at: string | null
           date: string
           id: string
+          marked_at: string | null
           status: string
           student_id: string
           tenant_id: string
         }
         Insert: {
+          arrival_time?: string | null
           created_at?: string | null
           date?: string
           id?: string
+          marked_at?: string | null
           status?: string
           student_id: string
           tenant_id: string
         }
         Update: {
+          arrival_time?: string | null
           created_at?: string | null
           date?: string
           id?: string
+          marked_at?: string | null
           status?: string
           student_id?: string
           tenant_id?: string
@@ -42,6 +48,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_learnings: {
+        Row: {
+          class: string
+          created_at: string | null
+          date: string
+          id: string
+          notes: string | null
+          student_id: string | null
+          tenant_id: string
+          topic: string
+        }
+        Insert: {
+          class: string
+          created_at?: string | null
+          date?: string
+          id?: string
+          notes?: string | null
+          student_id?: string | null
+          tenant_id: string
+          topic: string
+        }
+        Update: {
+          class?: string
+          created_at?: string | null
+          date?: string
+          id?: string
+          notes?: string | null
+          student_id?: string | null
+          tenant_id?: string
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_learnings_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
@@ -200,6 +247,39 @@ export type Database = {
           student_name?: string
           tenant_id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      timetables: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          start_date: string | null
+          tenant_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          start_date?: string | null
+          tenant_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          start_date?: string | null
+          tenant_id?: string
+          title?: string
         }
         Relationships: []
       }
