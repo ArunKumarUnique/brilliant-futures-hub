@@ -1,7 +1,7 @@
 import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useTenant } from '@/contexts/TenantContext';
-import { LayoutDashboard, Users, Package, Receipt, Bell, LogOut, PanelLeftClose, PanelLeft, FileImage, ClipboardCheck, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Users, Package, Receipt, Bell, LogOut, PanelLeftClose, PanelLeft, FileImage, ClipboardCheck, BookOpen, Calendar, Lightbulb } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -9,11 +9,13 @@ import { useIsMobile } from '@/hooks/use-mobile';
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
   { label: 'Students', icon: Users, path: '/admin/students' },
+  { label: 'Attendance', icon: ClipboardCheck, path: '/admin/attendance' },
+  { label: 'Homework', icon: BookOpen, path: '/admin/homework' },
+  { label: 'Daily Learnings', icon: Lightbulb, path: '/admin/daily-learnings' },
+  { label: 'Timetable', icon: Calendar, path: '/admin/timetable' },
   { label: 'Packages', icon: Package, path: '/admin/packages' },
   { label: 'Fee Tracking', icon: Receipt, path: '/admin/fees' },
   { label: 'Notifications', icon: Bell, path: '/admin/notifications' },
-  { label: 'Attendance', icon: ClipboardCheck, path: '/admin/attendance' },
-  { label: 'Homework', icon: BookOpen, path: '/admin/homework' },
   { label: 'Brochure Builder', icon: FileImage, path: '/admin/brochure-builder' },
 ];
 

@@ -8,7 +8,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { CheckCircle2, Circle, Save, Users, UserX, UserCheck, Bell, Send, MessageCircle, Mail, Phone, CheckCheck } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { CheckCircle2, Circle, Save, Users, UserX, UserCheck, Bell, Copy, CheckCheck, Clock } from 'lucide-react';
 
 interface Student {
   id: string;
@@ -18,6 +19,22 @@ interface Student {
   parent_email: string | null;
 }
 
+interface ArrivalTimes {
+  [studentId: string]: string; // HH:MM format
+}
+
+const getCurrentTime = () => {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+};
+
+const formatTime12 = (time24: string) => {
+  const [h, m] = time24.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+};
+
 const AdminAttendance = () => {
   const { config } = useTenant();
   const tenantId = config.id;
@@ -26,15 +43,13 @@ const AdminAttendance = () => {
   const [date, setDate] = useState(today);
   const [students, setStudents] = useState<Student[]>([]);
   const [presentIds, setPresentIds] = useState<Set<string>>(new Set());
+  const [arrivalTimes, setArrivalTimes] = useState<ArrivalTimes>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState('all');
   const [notifyOpen, setNotifyOpen] = useState(false);
-  const [sendMethod, setSendMethod] = useState<'whatsapp' | 'sms' | 'email'>('whatsapp');
-  const [messageTemplate, setMessageTemplate] = useState(
-    `Dear Parent, your child {student_name} was absent today ({date}) at {institute_name}. Please contact us for details.`
-  );
+  const [copied, setCopied] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -50,26 +65,30 @@ const AdminAttendance = () => {
     const allStudents = (studentData || []) as Student[];
     setStudents(allStudents);
 
-    // Load existing attendance for this date
     if (allStudents.length > 0) {
       const { data: attendanceData } = await supabase
         .from('attendance')
-        .select('student_id, status')
+        .select('student_id, status, arrival_time')
         .eq('tenant_id', tenantId)
         .eq('date', date);
 
       const present = new Set<string>();
+      const times: ArrivalTimes = {};
       attendanceData?.forEach((a: any) => {
-        if (a.status === 'present') present.add(a.student_id);
+        if (a.status === 'present') {
+          present.add(a.student_id);
+          if (a.arrival_time) times[a.student_id] = a.arrival_time.slice(0, 5);
+        }
       });
       setPresentIds(present);
+      setArrivalTimes(times);
 
-      // If there's existing data, mark as already saved
       if (attendanceData && attendanceData.length > 0) {
         setSaved(true);
       }
     } else {
       setPresentIds(new Set());
+      setArrivalTimes({});
     }
 
     setLoading(false);
@@ -81,14 +100,29 @@ const AdminAttendance = () => {
     setSaved(false);
     setPresentIds(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+        setArrivalTimes(t => { const n = { ...t }; delete n[id]; return n; });
+      } else {
+        next.add(id);
+        setArrivalTimes(t => ({ ...t, [id]: getCurrentTime() }));
+      }
       return next;
     });
   };
 
+  const updateArrivalTime = (id: string, time: string) => {
+    setSaved(false);
+    setArrivalTimes(t => ({ ...t, [id]: time }));
+  };
+
   const markAllPresent = () => {
     setSaved(false);
+    const now = getCurrentTime();
+    const newTimes: ArrivalTimes = {};
+    students.forEach(s => { newTimes[s.id] = arrivalTimes[s.id] || now; });
     setPresentIds(new Set(students.map(s => s.id)));
+    setArrivalTimes(newTimes);
   };
 
   const absentStudents = useMemo(() => students.filter(s => !presentIds.has(s.id)), [students, presentIds]);
@@ -103,19 +137,19 @@ const AdminAttendance = () => {
   const saveAttendance = async () => {
     setSaving(true);
     try {
-      // Delete existing records for this date + tenant
       await supabase
         .from('attendance')
         .delete()
         .eq('tenant_id', tenantId)
         .eq('date', date);
 
-      // Insert all records in bulk
       const records = students.map(s => ({
         student_id: s.id,
         tenant_id: tenantId,
         date,
         status: presentIds.has(s.id) ? 'present' : 'absent',
+        arrival_time: presentIds.has(s.id) ? (arrivalTimes[s.id] || null) : null,
+        marked_at: new Date().toISOString(),
       }));
 
       if (records.length > 0) {
@@ -132,40 +166,28 @@ const AdminAttendance = () => {
     }
   };
 
-  const generateMessage = (student: Student) => {
-    return messageTemplate
-      .replace(/{student_name}/g, student.student_name)
-      .replace(/{date}/g, new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }))
-      .replace(/{institute_name}/g, config.instituteName);
+  const formattedDate = new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const combinedAbsentMessage = useMemo(() => {
+    if (absentStudents.length === 0) return '';
+    const lines = absentStudents.map((s, i) => `${i + 1}. ${s.student_name} (${s.class})`);
+    return `Absent Students Today (${formattedDate}) – ${config.instituteName}:\n\n${lines.join('\n')}\n\nPlease ensure regular attendance. Contact us for any concerns.`;
+  }, [absentStudents, formattedDate, config.instituteName]);
+
+  const handleCopyMessage = async () => {
+    try {
+      await navigator.clipboard.writeText(combinedAbsentMessage);
+      setCopied(true);
+      toast({ title: 'Copied to clipboard!' });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: 'Copy failed', variant: 'destructive' });
+    }
   };
 
-  const handleNotify = () => {
-    if (absentStudents.length === 0) return;
-
-    if (sendMethod === 'whatsapp') {
-      absentStudents.forEach((student, idx) => {
-        const msg = encodeURIComponent(generateMessage(student));
-        const phone = student.parent_mobile.replace(/[^0-9]/g, '');
-        const url = `https://wa.me/91${phone}?text=${msg}`;
-        setTimeout(() => window.open(url, '_blank'), idx * 500);
-      });
-    } else if (sendMethod === 'email') {
-      absentStudents.forEach((student, idx) => {
-        if (student.parent_email) {
-          const msg = encodeURIComponent(generateMessage(student));
-          const subject = encodeURIComponent(`Absence Notice – ${config.instituteName}`);
-          setTimeout(() => window.open(`mailto:${student.parent_email}?subject=${subject}&body=${msg}`, '_blank'), idx * 300);
-        }
-      });
-    } else if (sendMethod === 'sms') {
-      absentStudents.forEach((student, idx) => {
-        const msg = encodeURIComponent(generateMessage(student));
-        const phone = student.parent_mobile.replace(/[^0-9]/g, '');
-        setTimeout(() => window.open(`sms:${phone}?body=${msg}`, '_blank'), idx * 300);
-      });
-    }
-
-    toast({ title: 'Notifications sent', description: `Notifying ${absentStudents.length} parent(s)` });
+  const handleShareWhatsApp = () => {
+    const msg = encodeURIComponent(combinedAbsentMessage);
+    window.open(`https://wa.me/?text=${msg}`, '_blank');
     setNotifyOpen(false);
   };
 
@@ -215,7 +237,7 @@ const AdminAttendance = () => {
           </Button>
           {saved && absentStudents.length > 0 && (
             <Button variant="outline" size="sm" onClick={() => setNotifyOpen(true)}>
-              <Bell className="w-4 h-4 mr-1" /> Notify Absent
+              <Bell className="w-4 h-4 mr-1" /> Notify
             </Button>
           )}
         </div>
@@ -233,28 +255,44 @@ const AdminAttendance = () => {
           displayedStudents.map(s => {
             const isPresent = presentIds.has(s.id);
             return (
-              <button
+              <div
                 key={s.id}
-                onClick={() => togglePresent(s.id)}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all active:scale-[0.98] ${
+                className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all ${
                   isPresent
                     ? 'bg-green-50 border-green-300 dark:bg-green-950/30 dark:border-green-800'
-                    : 'bg-card border-border hover:bg-muted/50'
+                    : 'bg-card border-border'
                 }`}
               >
-                {isPresent ? (
-                  <CheckCircle2 className="w-6 h-6 text-green-600 shrink-0" />
-                ) : (
-                  <Circle className="w-6 h-6 text-muted-foreground shrink-0" />
-                )}
-                <div className="flex-1 text-left min-w-0">
+                <button
+                  onClick={() => togglePresent(s.id)}
+                  className="shrink-0 active:scale-90 transition-transform"
+                >
+                  {isPresent ? (
+                    <CheckCircle2 className="w-7 h-7 text-green-600" />
+                  ) : (
+                    <Circle className="w-7 h-7 text-muted-foreground" />
+                  )}
+                </button>
+                <div className="flex-1 min-w-0" onClick={() => togglePresent(s.id)}>
                   <p className="font-medium text-foreground text-sm truncate">{s.student_name}</p>
                   <p className="text-xs text-muted-foreground">{s.class}</p>
                 </div>
-                <Badge variant={isPresent ? 'default' : 'secondary'} className={isPresent ? 'bg-green-600 text-white' : ''}>
-                  {isPresent ? 'Present' : 'Absent'}
+                {isPresent && (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                    <Input
+                      type="time"
+                      value={arrivalTimes[s.id] || ''}
+                      onChange={e => updateArrivalTime(s.id, e.target.value)}
+                      onClick={e => e.stopPropagation()}
+                      className="w-[90px] h-7 text-xs px-1.5 py-0 border-input"
+                    />
+                  </div>
+                )}
+                <Badge variant={isPresent ? 'default' : 'secondary'} className={isPresent ? 'bg-green-600 text-white shrink-0' : 'shrink-0'}>
+                  {isPresent ? 'P' : 'A'}
                 </Badge>
-              </button>
+              </div>
             );
           })
         )}
@@ -280,42 +318,37 @@ const AdminAttendance = () => {
         </div>
       )}
 
-      {/* Notify Dialog */}
+      {/* Notify Dialog — Combined Message */}
       <Dialog open={notifyOpen} onOpenChange={setNotifyOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Notify Absent Parents ({absentStudents.length})</DialogTitle>
+            <DialogTitle>Absent Students ({absentStudents.length})</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Absent list */}
+            <div className="space-y-1 max-h-40 overflow-y-auto">
+              {absentStudents.map((s, i) => (
+                <div key={s.id} className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground w-5 text-right">{i + 1}.</span>
+                  <span className="font-medium text-foreground">{s.student_name}</span>
+                  <Badge variant="outline" className="text-xs">{s.class}</Badge>
+                  <span className="text-xs text-muted-foreground ml-auto">{s.parent_mobile}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Combined message */}
             <div>
-              <Label>Send via</Label>
-              <div className="flex gap-2 mt-1.5">
-                <Button size="sm" variant={sendMethod === 'whatsapp' ? 'default' : 'outline'} onClick={() => setSendMethod('whatsapp')}>
-                  <MessageCircle className="w-4 h-4 mr-1" /> WhatsApp
-                </Button>
-                <Button size="sm" variant={sendMethod === 'sms' ? 'default' : 'outline'} onClick={() => setSendMethod('sms')}>
-                  <Phone className="w-4 h-4 mr-1" /> SMS
-                </Button>
-                <Button size="sm" variant={sendMethod === 'email' ? 'default' : 'outline'} onClick={() => setSendMethod('email')}>
-                  <Mail className="w-4 h-4 mr-1" /> Email
-                </Button>
-              </div>
+              <Label>Combined Message</Label>
+              <Textarea value={combinedAbsentMessage} readOnly rows={5} className="mt-1.5 text-sm" />
             </div>
-            <div className="space-y-1.5">
-              <Label>Message Template</Label>
-              <Textarea value={messageTemplate} onChange={e => setMessageTemplate(e.target.value)} rows={3} />
-              <p className="text-xs text-muted-foreground">Placeholders: {'{student_name}'}, {'{date}'}, {'{institute_name}'}</p>
-            </div>
-            <div className="bg-muted rounded-lg p-3">
-              <p className="text-xs text-muted-foreground mb-1">Preview:</p>
-              <p className="text-sm text-foreground">
-                {absentStudents[0] ? generateMessage(absentStudents[0]) : '—'}
-              </p>
-            </div>
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setNotifyOpen(false)}>Cancel</Button>
-              <Button onClick={handleNotify}>
-                <Send className="w-4 h-4 mr-1" /> Notify All ({absentStudents.length})
+
+            <div className="flex flex-col gap-2">
+              <Button onClick={handleCopyMessage} variant={copied ? 'default' : 'outline'} className="w-full">
+                {copied ? <><CheckCircle2 className="w-4 h-4 mr-2" /> Copied!</> : <><Copy className="w-4 h-4 mr-2" /> Copy Full Message</>}
+              </Button>
+              <Button onClick={handleShareWhatsApp} className="w-full bg-green-600 hover:bg-green-700 text-white">
+                Share on WhatsApp
               </Button>
             </div>
           </div>

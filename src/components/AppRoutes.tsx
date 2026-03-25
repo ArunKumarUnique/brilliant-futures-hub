@@ -10,7 +10,6 @@ import Admissions from '@/pages/Admissions';
 import Media from '@/pages/Media';
 import Contact from '@/pages/Contact';
 import BrochureBuilder from '@/pages/BrochureBuilder';
-import { lazy } from 'react';
 import Packages from '@/pages/Packages';
 import NotFound from '@/pages/NotFound';
 import AdminLogin from '@/pages/admin/AdminLogin';
@@ -22,6 +21,8 @@ import AdminFees from '@/pages/admin/AdminFees';
 import AdminNotifications from '@/pages/admin/AdminNotifications';
 import AdminAttendance from '@/pages/admin/AdminAttendance';
 import AdminHomework from '@/pages/admin/AdminHomework';
+import AdminTimetable from '@/pages/admin/AdminTimetable';
+import AdminDailyLearnings from '@/pages/admin/AdminDailyLearnings';
 
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen flex flex-col">
@@ -47,7 +48,6 @@ const AppRoutes = () => {
         {config.pages.media && <Route path="/media" element={<PublicLayout><Media /></PublicLayout>} />}
         {config.pages.contact && <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />}
         {config.pages.packages && <Route path="/packages" element={<PublicLayout><Packages /></PublicLayout>} />}
-        
 
         {/* Admin routes */}
         <Route path="/admin" element={<AdminLogin />} />
@@ -59,6 +59,8 @@ const AppRoutes = () => {
           <Route path="notifications" element={<AdminNotifications />} />
           <Route path="attendance" element={<AdminAttendance />} />
           <Route path="homework" element={<AdminHomework />} />
+          <Route path="timetable" element={<AdminTimetable />} />
+          <Route path="daily-learnings" element={<AdminDailyLearnings />} />
           <Route path="brochure-builder" element={<BrochureBuilder />} />
         </Route>
 
