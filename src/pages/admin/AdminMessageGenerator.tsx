@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Copy, Check, CalendarIcon } from 'lucide-react';
+import { Copy, Check, CalendarIcon, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,7 +15,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { format, isToday, isTomorrow, isAfter, startOfDay } from 'date-fns';
+import { format, isToday, isTomorrow, startOfDay } from 'date-fns';
 
 const AdminMessageGenerator = () => {
   const { config } = useTenant();
@@ -45,11 +45,6 @@ const CopyableMessage = ({ message }: { message: string }) => {
   const [edited, setEdited] = useState(message);
   const [copied, setCopied] = useState(false);
 
-  // Sync when generated message changes
-  if (message !== edited && !copied) {
-    // only reset if the base message changed
-  }
-
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(edited);
@@ -77,11 +72,25 @@ const CopyableMessage = ({ message }: { message: string }) => {
   );
 };
 
+const GenerateButton = ({ onClick, dirty, hasGenerated }: { onClick: () => void; dirty: boolean; hasGenerated: boolean }) => (
+  <div className="space-y-1">
+    {hasGenerated && dirty && (
+      <p className="text-xs text-muted-foreground flex items-center gap-1">
+        <RefreshCw className="w-3 h-3" /> Changes detected — regenerate message
+      </p>
+    )}
+    <Button onClick={onClick} variant="secondary" className="w-full sticky bottom-16">
+      {hasGenerated && dirty ? 'Regenerate Message' : 'Generate Message'}
+    </Button>
+  </div>
+);
+
 /* ── Fee Reminder ── */
 const FeeReminder = ({ instituteName, tenantId }: { instituteName: string; tenantId: string }) => {
   const [studentId, setStudentId] = useState('');
   const [month, setMonth] = useState(new Date().toLocaleString('en', { month: 'long' }));
   const [generated, setGenerated] = useState('');
+  const [dirty, setDirty] = useState(false);
 
   const { data: students = [] } = useQuery({
     queryKey: ['students-msg', tenantId],
@@ -93,6 +102,9 @@ const FeeReminder = ({ instituteName, tenantId }: { instituteName: string; tenan
 
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
+  const setStudentDirty = useCallback((v: string) => { setStudentId(v); if (generated) setDirty(true); }, [generated]);
+  const setMonthDirty = useCallback((v: string) => { setMonth(v); if (generated) setDirty(true); }, [generated]);
+
   const generate = () => {
     if (studentId === 'all') {
       const pending = students.map((s, i) => `${i + 1}. ${s.student_name}`).join('\n');
@@ -101,6 +113,7 @@ const FeeReminder = ({ instituteName, tenantId }: { instituteName: string; tenan
       const s = students.find(x => x.id === studentId);
       setGenerated(`Dear Parent,\n\nThis is a reminder that the tuition fee for ${s?.student_name || 'your child'} for the month of ${month} is pending. Kindly make the payment at the earliest.\n\n– ${instituteName}`);
     }
+    setDirty(false);
   };
 
   return (
@@ -108,7 +121,7 @@ const FeeReminder = ({ instituteName, tenantId }: { instituteName: string; tenan
       <CardContent className="pt-4 space-y-4">
         <div className="space-y-2">
           <Label>Student</Label>
-          <Select value={studentId} onValueChange={setStudentId}>
+          <Select value={studentId} onValueChange={setStudentDirty}>
             <SelectTrigger><SelectValue placeholder="Select student" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Students (Bulk)</SelectItem>
@@ -118,12 +131,12 @@ const FeeReminder = ({ instituteName, tenantId }: { instituteName: string; tenan
         </div>
         <div className="space-y-2">
           <Label>Month</Label>
-          <Select value={month} onValueChange={setMonth}>
+          <Select value={month} onValueChange={setMonthDirty}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>{months.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
           </Select>
         </div>
-        <Button onClick={generate} variant="secondary" className="w-full">Generate Message</Button>
+        <GenerateButton onClick={generate} dirty={dirty} hasGenerated={!!generated} />
         {generated && <CopyableMessage message={generated} />}
       </CardContent>
     </Card>
@@ -135,12 +148,17 @@ const TuitionClosed = ({ instituteName }: { instituteName: string }) => {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [reason, setReason] = useState('');
   const [generated, setGenerated] = useState('');
+  const [dirty, setDirty] = useState(false);
 
   const formatDate = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const setDateDirty = useCallback((v: string) => { setDate(v); if (generated) setDirty(true); }, [generated]);
+  const setReasonDirty = useCallback((v: string) => { setReason(v); if (generated) setDirty(true); }, [generated]);
 
   const generate = () => {
     const r = reason.trim() ? ` Reason: ${reason.trim()}.` : '';
     setGenerated(`Dear Parents,\n\nTuition will remain closed on ${formatDate(date)}.${r}\n\n– ${instituteName}`);
+    setDirty(false);
   };
 
   return (
@@ -148,13 +166,13 @@ const TuitionClosed = ({ instituteName }: { instituteName: string }) => {
       <CardContent className="pt-4 space-y-4">
         <div className="space-y-2">
           <Label>Date</Label>
-          <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
+          <Input type="date" value={date} onChange={e => setDateDirty(e.target.value)} />
         </div>
         <div className="space-y-2">
           <Label>Reason (optional)</Label>
-          <Input placeholder="e.g. Sri Rama Navami" value={reason} onChange={e => setReason(e.target.value)} />
+          <Input placeholder="e.g. Sri Rama Navami" value={reason} onChange={e => setReasonDirty(e.target.value)} />
         </div>
-        <Button onClick={generate} variant="secondary" className="w-full">Generate Message</Button>
+        <GenerateButton onClick={generate} dirty={dirty} hasGenerated={!!generated} />
         {generated && <CopyableMessage message={generated} />}
       </CardContent>
     </Card>
@@ -167,12 +185,18 @@ const TimingsUpdate = ({ instituteName }: { instituteName: string }) => {
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('12:00');
   const [generated, setGenerated] = useState('');
+  const [dirty, setDirty] = useState(false);
 
   const formatDate = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
   const formatTime = (t: string) => { const [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${ap}`; };
 
+  const setDateDirty = useCallback((v: string) => { setDate(v); if (generated) setDirty(true); }, [generated]);
+  const setStartDirty = useCallback((v: string) => { setStartTime(v); if (generated) setDirty(true); }, [generated]);
+  const setEndDirty = useCallback((v: string) => { setEndTime(v); if (generated) setDirty(true); }, [generated]);
+
   const generate = () => {
     setGenerated(`Dear Parents,\n\nTuition timings for today (${formatDate(date)}) are from ${formatTime(startTime)} to ${formatTime(endTime)}.\n\n– ${instituteName}`);
+    setDirty(false);
   };
 
   return (
@@ -180,19 +204,19 @@ const TimingsUpdate = ({ instituteName }: { instituteName: string }) => {
       <CardContent className="pt-4 space-y-4">
         <div className="space-y-2">
           <Label>Date</Label>
-          <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
+          <Input type="date" value={date} onChange={e => setDateDirty(e.target.value)} />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label>Start Time</Label>
-            <Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} />
+            <Input type="time" value={startTime} onChange={e => setStartDirty(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label>End Time</Label>
-            <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} />
+            <Input type="time" value={endTime} onChange={e => setEndDirty(e.target.value)} />
           </div>
         </div>
-        <Button onClick={generate} variant="secondary" className="w-full">Generate Message</Button>
+        <GenerateButton onClick={generate} dirty={dirty} hasGenerated={!!generated} />
         {generated && <CopyableMessage message={generated} />}
       </CardContent>
     </Card>
@@ -219,12 +243,18 @@ const OccasionWishes = ({ instituteName }: { instituteName: string }) => {
   const [closed, setClosed] = useState(true);
   const [dates, setDates] = useState<Date[]>([startOfDay(new Date())]);
   const [generated, setGenerated] = useState('');
+  const [dirty, setDirty] = useState(false);
+
+  const setOccasionDirty = useCallback((v: string) => { setOccasion(v); if (generated) setDirty(true); }, [generated]);
+  const setClosedDirty = useCallback((v: boolean) => { setClosed(v); if (generated) setDirty(true); }, [generated]);
+  const setDatesDirty = useCallback((v: Date[]) => { setDates(v); if (generated) setDirty(true); }, [generated]);
 
   const generate = () => {
     if (!occasion.trim()) { toast.error('Enter occasion name'); return; }
     const dateText = computeDateText(dates);
     const closedLine = closed && dateText ? ` Tuition will remain closed ${dateText}.` : '';
     setGenerated(`Dear Parents,\n\nWishing you all a very Happy ${occasion.trim()}!${closedLine}\n\n– ${instituteName}`);
+    setDirty(false);
   };
 
   return (
@@ -232,7 +262,7 @@ const OccasionWishes = ({ instituteName }: { instituteName: string }) => {
       <CardContent className="pt-4 space-y-4">
         <div className="space-y-2">
           <Label>Occasion Name</Label>
-          <Input placeholder="e.g. Ugadi, Diwali" value={occasion} onChange={e => setOccasion(e.target.value)} />
+          <Input placeholder="e.g. Ugadi, Diwali" value={occasion} onChange={e => setOccasionDirty(e.target.value)} />
         </div>
         <div className="space-y-2">
           <Label>Date(s)</Label>
@@ -247,7 +277,7 @@ const OccasionWishes = ({ instituteName }: { instituteName: string }) => {
               <Calendar
                 mode="multiple"
                 selected={dates}
-                onSelect={(d) => setDates(d || [])}
+                onSelect={(d) => setDatesDirty(d || [])}
                 className={cn("p-3 pointer-events-auto")}
               />
             </PopoverContent>
@@ -255,9 +285,9 @@ const OccasionWishes = ({ instituteName }: { instituteName: string }) => {
         </div>
         <div className="flex items-center justify-between">
           <Label>Tuition Closed?</Label>
-          <Switch checked={closed} onCheckedChange={setClosed} />
+          <Switch checked={closed} onCheckedChange={setClosedDirty} />
         </div>
-        <Button onClick={generate} variant="secondary" className="w-full">Generate Message</Button>
+        <GenerateButton onClick={generate} dirty={dirty} hasGenerated={!!generated} />
         {generated && <CopyableMessage message={generated} />}
       </CardContent>
     </Card>
