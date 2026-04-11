@@ -28,7 +28,7 @@ const AdminMessageGenerator = () => {
           <TabsTrigger value="occasion" className="text-xs px-1 py-2">Occasion</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="fee"><FeeReminder instituteName={name} tenantId={config.tenantId} /></TabsContent>
+        <TabsContent value="fee"><FeeReminder instituteName={name} tenantId={config.id} /></TabsContent>
         <TabsContent value="closed"><TuitionClosed instituteName={name} /></TabsContent>
         <TabsContent value="timings"><TimingsUpdate instituteName={name} /></TabsContent>
         <TabsContent value="occasion"><OccasionWishes instituteName={name} /></TabsContent>
