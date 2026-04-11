@@ -200,14 +200,30 @@ const TimingsUpdate = ({ instituteName }: { instituteName: string }) => {
 };
 
 /* ── Occasion Wishes ── */
+const formatDateLabel = (date: Date): string => {
+  if (isToday(date)) return 'today';
+  if (isTomorrow(date)) return 'tomorrow';
+  return `on ${format(date, 'do MMMM')}`;
+};
+
+const computeDateText = (dates: Date[]): string => {
+  if (!dates.length) return '';
+  const sorted = [...dates].sort((a, b) => a.getTime() - b.getTime());
+  const labels = sorted.map(formatDateLabel);
+  if (labels.length === 1) return labels[0];
+  return labels.slice(0, -1).join(', ') + ' and ' + labels[labels.length - 1];
+};
+
 const OccasionWishes = ({ instituteName }: { instituteName: string }) => {
   const [occasion, setOccasion] = useState('');
   const [closed, setClosed] = useState(true);
+  const [dates, setDates] = useState<Date[]>([startOfDay(new Date())]);
   const [generated, setGenerated] = useState('');
 
   const generate = () => {
     if (!occasion.trim()) { toast.error('Enter occasion name'); return; }
-    const closedLine = closed ? ' Tuition will remain closed today on the occasion.' : '';
+    const dateText = computeDateText(dates);
+    const closedLine = closed && dateText ? ` Tuition will remain closed ${dateText}.` : '';
     setGenerated(`Dear Parents,\n\nWishing you all a very Happy ${occasion.trim()}!${closedLine}\n\n– ${instituteName}`);
   };
 
@@ -217,6 +233,25 @@ const OccasionWishes = ({ instituteName }: { instituteName: string }) => {
         <div className="space-y-2">
           <Label>Occasion Name</Label>
           <Input placeholder="e.g. Ugadi, Diwali" value={occasion} onChange={e => setOccasion(e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label>Date(s)</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !dates.length && "text-muted-foreground")}>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dates.length ? dates.map(d => format(d, 'dd MMM')).join(', ') : 'Pick date(s)'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="multiple"
+                selected={dates}
+                onSelect={(d) => setDates(d || [])}
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
         <div className="flex items-center justify-between">
           <Label>Tuition Closed?</Label>
