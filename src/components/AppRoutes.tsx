@@ -23,6 +23,7 @@ import AdminAttendance from '@/pages/admin/AdminAttendance';
 import AdminHomework from '@/pages/admin/AdminHomework';
 import AdminTimetable from '@/pages/admin/AdminTimetable';
 import AdminDailyLearnings from '@/pages/admin/AdminDailyLearnings';
+import AdminMessageGenerator from '@/pages/admin/AdminMessageGenerator';
 
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen flex flex-col">
@@ -61,6 +62,7 @@ const AppRoutes = () => {
           <Route path="homework" element={<AdminHomework />} />
           <Route path="timetable" element={<AdminTimetable />} />
           <Route path="daily-learnings" element={<AdminDailyLearnings />} />
+          <Route path="messages" element={<AdminMessageGenerator />} />
           <Route path="brochure-builder" element={<BrochureBuilder />} />
         </Route>
 
