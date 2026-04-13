@@ -50,6 +50,8 @@ const AdminAttendance = () => {
   const [tab, setTab] = useState('all');
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportCopied, setReportCopied] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
