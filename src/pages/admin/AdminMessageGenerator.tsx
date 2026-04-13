@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -45,6 +45,11 @@ const CopyableMessage = ({ message }: { message: string }) => {
   const [edited, setEdited] = useState(message);
   const [copied, setCopied] = useState(false);
 
+  // Sync with new generated message
+  useEffect(() => {
+    setEdited(message);
+  }, [message]);
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(edited);
@@ -72,18 +77,49 @@ const CopyableMessage = ({ message }: { message: string }) => {
   );
 };
 
-const GenerateButton = ({ onClick, dirty, hasGenerated }: { onClick: () => void; dirty: boolean; hasGenerated: boolean }) => (
-  <div className="space-y-1">
-    {hasGenerated && dirty && (
-      <p className="text-xs text-muted-foreground flex items-center gap-1">
-        <RefreshCw className="w-3 h-3" /> Changes detected — regenerate message
-      </p>
-    )}
-    <Button onClick={onClick} variant="secondary" className="w-full sticky bottom-16">
-      {hasGenerated && dirty ? 'Regenerate Message' : 'Generate Message'}
-    </Button>
-  </div>
-);
+const GenerateButton = ({ onClick, dirty, hasGenerated }: { onClick: () => void; dirty: boolean; hasGenerated: boolean }) => {
+  const disabled = hasGenerated && !dirty;
+  return (
+    <div className="space-y-1">
+      {hasGenerated && dirty && (
+        <p className="text-xs text-muted-foreground flex items-center gap-1">
+          <RefreshCw className="w-3 h-3" /> Changes detected — regenerate message
+        </p>
+      )}
+      <Button
+        onClick={onClick}
+        variant={disabled ? 'secondary' : 'default'}
+        disabled={disabled}
+        className="w-full sticky bottom-16"
+      >
+        {hasGenerated && dirty ? 'Regenerate Message' : 'Generate Message'}
+      </Button>
+    </div>
+  );
+};
+
+/* ── Shared date helpers ── */
+const formatDateLabel = (date: Date): string => {
+  if (isToday(date)) return 'today';
+  if (isTomorrow(date)) return 'tomorrow';
+  return `on ${format(date, 'do MMMM')}`;
+};
+
+const computeDateText = (dates: Date[]): string => {
+  if (!dates.length) return '';
+  const sorted = [...dates].sort((a, b) => a.getTime() - b.getTime());
+  const labels = sorted.map(formatDateLabel);
+  if (labels.length === 1) return labels[0];
+  return labels.slice(0, -1).join(', ') + ' and ' + labels[labels.length - 1];
+};
+
+const formatDateLabelWithFull = (dateStr: string): { label: string; full: string } => {
+  const d = new Date(dateStr + 'T00:00:00');
+  const full = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+  if (isToday(d)) return { label: 'today', full };
+  if (isTomorrow(d)) return { label: 'tomorrow', full };
+  return { label: `on ${full}`, full };
+};
 
 /* ── Fee Reminder ── */
 const FeeReminder = ({ instituteName, tenantId }: { instituteName: string; tenantId: string }) => {
@@ -150,14 +186,13 @@ const TuitionClosed = ({ instituteName }: { instituteName: string }) => {
   const [generated, setGenerated] = useState('');
   const [dirty, setDirty] = useState(false);
 
-  const formatDate = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
-
   const setDateDirty = useCallback((v: string) => { setDate(v); if (generated) setDirty(true); }, [generated]);
   const setReasonDirty = useCallback((v: string) => { setReason(v); if (generated) setDirty(true); }, [generated]);
 
   const generate = () => {
+    const { label } = formatDateLabelWithFull(date);
     const r = reason.trim() ? ` Reason: ${reason.trim()}.` : '';
-    setGenerated(`Dear Parents,\n\nTuition will remain closed on ${formatDate(date)}.${r}\n\n– ${instituteName}`);
+    setGenerated(`Dear Parents,\n\nTuition will remain closed ${label}.${r}\n\n– ${instituteName}`);
     setDirty(false);
   };
 
@@ -187,7 +222,6 @@ const TimingsUpdate = ({ instituteName }: { instituteName: string }) => {
   const [generated, setGenerated] = useState('');
   const [dirty, setDirty] = useState(false);
 
-  const formatDate = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
   const formatTime = (t: string) => { const [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${ap}`; };
 
   const setDateDirty = useCallback((v: string) => { setDate(v); if (generated) setDirty(true); }, [generated]);
@@ -195,7 +229,8 @@ const TimingsUpdate = ({ instituteName }: { instituteName: string }) => {
   const setEndDirty = useCallback((v: string) => { setEndTime(v); if (generated) setDirty(true); }, [generated]);
 
   const generate = () => {
-    setGenerated(`Dear Parents,\n\nTuition timings for today (${formatDate(date)}) are from ${formatTime(startTime)} to ${formatTime(endTime)}.\n\n– ${instituteName}`);
+    const { label, full } = formatDateLabelWithFull(date);
+    setGenerated(`Dear Parents,\n\nTuition timings for ${label} (${full}) are from ${formatTime(startTime)} to ${formatTime(endTime)}.\n\n– ${instituteName}`);
     setDirty(false);
   };
 
@@ -224,20 +259,6 @@ const TimingsUpdate = ({ instituteName }: { instituteName: string }) => {
 };
 
 /* ── Occasion Wishes ── */
-const formatDateLabel = (date: Date): string => {
-  if (isToday(date)) return 'today';
-  if (isTomorrow(date)) return 'tomorrow';
-  return `on ${format(date, 'do MMMM')}`;
-};
-
-const computeDateText = (dates: Date[]): string => {
-  if (!dates.length) return '';
-  const sorted = [...dates].sort((a, b) => a.getTime() - b.getTime());
-  const labels = sorted.map(formatDateLabel);
-  if (labels.length === 1) return labels[0];
-  return labels.slice(0, -1).join(', ') + ' and ' + labels[labels.length - 1];
-};
-
 const OccasionWishes = ({ instituteName }: { instituteName: string }) => {
   const [occasion, setOccasion] = useState('');
   const [closed, setClosed] = useState(true);
