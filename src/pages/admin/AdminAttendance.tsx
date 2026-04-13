@@ -391,6 +391,21 @@ const AdminAttendance = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Daily Report Dialog */}
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Daily Attendance Report</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea value={dailyReport} readOnly rows={10} className="text-sm" />
+            <Button onClick={handleCopyReport} variant={reportCopied ? 'default' : 'outline'} className="w-full h-12 text-base">
+              {reportCopied ? <><CheckCircle2 className="w-5 h-5 mr-2" /> Copied!</> : <><Copy className="w-5 h-5 mr-2" /> Copy Report</>}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
