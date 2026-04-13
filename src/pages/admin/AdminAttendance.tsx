@@ -180,10 +180,10 @@ const AdminAttendance = () => {
     try {
       await navigator.clipboard.writeText(combinedAbsentMessage);
       setCopied(true);
-      toast({ title: 'Copied to clipboard!' });
+      toast.success('Copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast({ title: 'Copy failed', variant: 'destructive' });
+      toast.error('Copy failed');
     }
   };
 
