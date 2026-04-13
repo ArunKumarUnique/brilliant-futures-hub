@@ -272,6 +272,11 @@ const AdminAttendance = () => {
               <Bell className="w-4 h-4 mr-1" /> Notify
             </Button>
           )}
+          {saved && students.length > 0 && (
+            <Button variant="outline" size="sm" onClick={() => setReportOpen(true)}>
+              <FileText className="w-4 h-4 mr-1" /> Report
+            </Button>
+          )}
         </div>
       </div>
 
