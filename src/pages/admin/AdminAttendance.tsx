@@ -160,9 +160,9 @@ const AdminAttendance = () => {
       }
 
       setSaved(true);
-      toast({ title: 'Attendance saved', description: `${presentIds.size} present, ${students.length - presentIds.size} absent` });
+      toast.success(`Attendance saved — ${presentIds.size} present, ${students.length - presentIds.size} absent`);
     } catch (e: any) {
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+      toast.error(e.message || 'Failed to save');
     } finally {
       setSaving(false);
     }
