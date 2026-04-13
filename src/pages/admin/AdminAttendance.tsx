@@ -3,13 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { CheckCircle2, Circle, Save, Users, UserX, UserCheck, Bell, Copy, CheckCheck, Clock } from 'lucide-react';
+import { CheckCircle2, Circle, Save, Users, UserX, UserCheck, Bell, Copy, CheckCheck, Clock, FileText } from 'lucide-react';
 
 interface Student {
   id: string;
@@ -50,6 +50,8 @@ const AdminAttendance = () => {
   const [tab, setTab] = useState('all');
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportCopied, setReportCopied] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -158,9 +160,9 @@ const AdminAttendance = () => {
       }
 
       setSaved(true);
-      toast({ title: 'Attendance saved', description: `${presentIds.size} present, ${students.length - presentIds.size} absent` });
+      toast.success(`Attendance saved — ${presentIds.size} present, ${students.length - presentIds.size} absent`);
     } catch (e: any) {
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+      toast.error(e.message || 'Failed to save');
     } finally {
       setSaving(false);
     }
@@ -178,10 +180,10 @@ const AdminAttendance = () => {
     try {
       await navigator.clipboard.writeText(combinedAbsentMessage);
       setCopied(true);
-      toast({ title: 'Copied to clipboard!' });
+      toast.success('Copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast({ title: 'Copy failed', variant: 'destructive' });
+      toast.error('Copy failed');
     }
   };
 
@@ -189,6 +191,36 @@ const AdminAttendance = () => {
     const msg = encodeURIComponent(combinedAbsentMessage);
     window.open(`https://wa.me/?text=${msg}`, '_blank');
     setNotifyOpen(false);
+  };
+
+  const dailyReport = useMemo(() => {
+    const presentLines = presentStudents.map((s, i) => {
+      const time = arrivalTimes[s.id];
+      const timeStr = time ? ` – ${formatTime12(time)}` : '';
+      return `${i + 1}. ${s.student_name}${timeStr}`;
+    });
+    const absentLines = absentStudents.map((s, i) => `${i + 1}. ${s.student_name}`);
+
+    let report = `Attendance Report – ${formattedDate}\n\n`;
+    if (presentLines.length > 0) {
+      report += `Present Students (${presentLines.length}):\n${presentLines.join('\n')}\n\n`;
+    }
+    if (absentLines.length > 0) {
+      report += `Absent Students (${absentLines.length}):\n${absentLines.join('\n')}\n\n`;
+    }
+    report += `– ${config.instituteName}`;
+    return report;
+  }, [presentStudents, absentStudents, arrivalTimes, formattedDate, config.instituteName]);
+
+  const handleCopyReport = async () => {
+    try {
+      await navigator.clipboard.writeText(dailyReport);
+      setReportCopied(true);
+      toast.success('Report copied successfully');
+      setTimeout(() => setReportCopied(false), 2000);
+    } catch {
+      toast.error('Copy failed');
+    }
   };
 
   return (
@@ -238,6 +270,11 @@ const AdminAttendance = () => {
           {saved && absentStudents.length > 0 && (
             <Button variant="outline" size="sm" onClick={() => setNotifyOpen(true)}>
               <Bell className="w-4 h-4 mr-1" /> Notify
+            </Button>
+          )}
+          {saved && students.length > 0 && (
+            <Button variant="outline" size="sm" onClick={() => setReportOpen(true)}>
+              <FileText className="w-4 h-4 mr-1" /> Report
             </Button>
           )}
         </div>
@@ -351,6 +388,21 @@ const AdminAttendance = () => {
                 Share on WhatsApp
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Daily Report Dialog */}
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Daily Attendance Report</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea value={dailyReport} readOnly rows={10} className="text-sm" />
+            <Button onClick={handleCopyReport} variant={reportCopied ? 'default' : 'outline'} className="w-full h-12 text-base">
+              {reportCopied ? <><CheckCircle2 className="w-5 h-5 mr-2" /> Copied!</> : <><Copy className="w-5 h-5 mr-2" /> Copy Report</>}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
