@@ -193,6 +193,36 @@ const AdminAttendance = () => {
     setNotifyOpen(false);
   };
 
+  const dailyReport = useMemo(() => {
+    const presentLines = presentStudents.map((s, i) => {
+      const time = arrivalTimes[s.id];
+      const timeStr = time ? ` – ${formatTime12(time)}` : '';
+      return `${i + 1}. ${s.student_name}${timeStr}`;
+    });
+    const absentLines = absentStudents.map((s, i) => `${i + 1}. ${s.student_name}`);
+
+    let report = `Attendance Report – ${formattedDate}\n\n`;
+    if (presentLines.length > 0) {
+      report += `Present Students (${presentLines.length}):\n${presentLines.join('\n')}\n\n`;
+    }
+    if (absentLines.length > 0) {
+      report += `Absent Students (${absentLines.length}):\n${absentLines.join('\n')}\n\n`;
+    }
+    report += `– ${config.instituteName}`;
+    return report;
+  }, [presentStudents, absentStudents, arrivalTimes, formattedDate, config.instituteName]);
+
+  const handleCopyReport = async () => {
+    try {
+      await navigator.clipboard.writeText(dailyReport);
+      setReportCopied(true);
+      toast.success('Report copied successfully');
+      setTimeout(() => setReportCopied(false), 2000);
+    } catch {
+      toast.error('Copy failed');
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
