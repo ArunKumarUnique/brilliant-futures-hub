@@ -8,9 +8,12 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from '@/hooks/use-toast';
-import { Plus, BookOpen, Loader2, Trash2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { Plus, BookOpen, Loader2, Trash2, CalendarIcon } from 'lucide-react';
+import { format, startOfDay } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface DailyLearning {
   id: string;
@@ -44,7 +47,8 @@ const AdminDailyLearnings = () => {
   const [saving, setSaving] = useState(false);
 
   // Form
-  const [logDate, setLogDate] = useState(new Date().toISOString().slice(0, 10));
+  const [logDate, setLogDate] = useState<Date>(startOfDay(new Date()));
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [logClass, setLogClass] = useState('');
   const [topic, setTopic] = useState('');
   const [notes, setNotes] = useState('');
@@ -67,7 +71,7 @@ const AdminDailyLearnings = () => {
   useEffect(() => { fetchData(); }, [tenantId]);
 
   const resetForm = () => {
-    setLogDate(new Date().toISOString().slice(0, 10));
+    setLogDate(startOfDay(new Date()));
     setLogClass('');
     setTopic('');
     setNotes('');
@@ -82,7 +86,7 @@ const AdminDailyLearnings = () => {
     setSaving(true);
     const { error } = await supabase.from('daily_learnings').insert({
       tenant_id: tenantId,
-      date: logDate,
+      date: format(logDate, 'yyyy-MM-dd'),
       class: logClass,
       topic: topic.trim(),
       notes: notes.trim() || null,
@@ -191,7 +195,24 @@ const AdminDailyLearnings = () => {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Date</Label>
-                <Input type="date" value={logDate} onChange={e => setLogDate(e.target.value)} />
+                <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !logDate && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {logDate ? format(logDate, 'dd MMM') : 'Pick date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={logDate}
+                      onSelect={(d) => { if (d) { setLogDate(startOfDay(d)); setDatePickerOpen(false); } }}
+                      disabled={(d) => d > new Date()}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <Label>Class *</Label>
