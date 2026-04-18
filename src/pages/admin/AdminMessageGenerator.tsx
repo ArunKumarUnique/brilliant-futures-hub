@@ -25,17 +25,21 @@ const AdminMessageGenerator = () => {
     <div className="space-y-4">
       <h1 className="text-xl font-bold text-foreground">Message Generator</h1>
       <Tabs defaultValue="fee" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 h-auto">
-          <TabsTrigger value="fee" className="text-xs px-1 py-2">Fee Reminder</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto gap-1">
+          <TabsTrigger value="fee" className="text-xs px-1 py-2">Fee</TabsTrigger>
           <TabsTrigger value="closed" className="text-xs px-1 py-2">Closed</TabsTrigger>
           <TabsTrigger value="timings" className="text-xs px-1 py-2">Timings</TabsTrigger>
           <TabsTrigger value="occasion" className="text-xs px-1 py-2">Occasion</TabsTrigger>
+          <TabsTrigger value="homework" className="text-xs px-1 py-2">Homework</TabsTrigger>
+          <TabsTrigger value="learnings" className="text-xs px-1 py-2">Learnings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="fee"><FeeReminder instituteName={name} tenantId={config.id} /></TabsContent>
         <TabsContent value="closed"><TuitionClosed instituteName={name} /></TabsContent>
         <TabsContent value="timings"><TimingsUpdate instituteName={name} /></TabsContent>
         <TabsContent value="occasion"><OccasionWishes instituteName={name} /></TabsContent>
+        <TabsContent value="homework"><HomeworkMessage instituteName={name} tenantId={config.id} /></TabsContent>
+        <TabsContent value="learnings"><LearningsMessage instituteName={name} tenantId={config.id} /></TabsContent>
       </Tabs>
     </div>
   );
@@ -308,6 +312,190 @@ const OccasionWishes = ({ instituteName }: { instituteName: string }) => {
           <Label>Tuition Closed?</Label>
           <Switch checked={closed} onCheckedChange={setClosedDirty} />
         </div>
+        <GenerateButton onClick={generate} dirty={dirty} hasGenerated={!!generated} />
+        {generated && <CopyableMessage message={generated} />}
+      </CardContent>
+    </Card>
+  );
+};
+
+/* ── Homework Message ── */
+const HomeworkMessage = ({ instituteName, tenantId }: { instituteName: string; tenantId: string }) => {
+  const [date, setDate] = useState<Date>(startOfDay(new Date()));
+  const [dateOpen, setDateOpen] = useState(false);
+  const [filterClass, setFilterClass] = useState('all');
+  const [generated, setGenerated] = useState('');
+  const [dirty, setDirty] = useState(false);
+
+  const dateStr = format(date, 'yyyy-MM-dd');
+
+  const { data: homework = [] } = useQuery({
+    queryKey: ['homework-msg', tenantId, dateStr],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('homework')
+        .select('class, subject, title, description')
+        .eq('tenant_id', tenantId)
+        .eq('assigned_date', dateStr);
+      return data || [];
+    },
+  });
+
+  const classes = Array.from(new Set(homework.map(h => h.class))).sort();
+
+  const setDateDirty = useCallback((d: Date) => { setDate(d); if (generated) setDirty(true); }, [generated]);
+  const setClassDirty = useCallback((v: string) => { setFilterClass(v); if (generated) setDirty(true); }, [generated]);
+
+  const generate = () => {
+    const { label } = formatDateLabelWithFull(dateStr);
+    const list = filterClass === 'all' ? homework : homework.filter(h => h.class === filterClass);
+
+    if (!list.length) {
+      setGenerated(`Dear Parents,\n\nNo homework assigned ${label}.\n\n– ${instituteName}`);
+      setDirty(false);
+      return;
+    }
+
+    const grouped: Record<string, typeof list> = {};
+    list.forEach(h => { (grouped[h.class] ||= []).push(h); });
+
+    const sections = Object.keys(grouped).sort().map(cls => {
+      const items = grouped[cls].map(h => {
+        const subj = h.subject ? `${h.subject} – ` : '';
+        return `${subj}${h.title}${h.description ? ` (${h.description})` : ''}`;
+      }).join('\n');
+      return `${cls}:\n${items}`;
+    }).join('\n\n');
+
+    setGenerated(`Dear Parents,\n\nHomework for ${label}:\n\n${sections}\n\n– ${instituteName}`);
+    setDirty(false);
+  };
+
+  return (
+    <Card>
+      <CardContent className="pt-4 space-y-4">
+        <div className="space-y-2">
+          <Label>Date</Label>
+          <Popover open={dateOpen} onOpenChange={setDateOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-full justify-start text-left font-normal">
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {format(date, 'dd MMM yyyy')}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={(d) => { if (d) { setDateDirty(startOfDay(d)); setDateOpen(false); } }}
+                disabled={(d) => d > new Date()}
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        <div className="space-y-2">
+          <Label>Class</Label>
+          <Select value={filterClass} onValueChange={setClassDirty}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Classes</SelectItem>
+              {classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <p className="text-xs text-muted-foreground">{homework.length} homework entr{homework.length === 1 ? 'y' : 'ies'} for selected date</p>
+        <GenerateButton onClick={generate} dirty={dirty} hasGenerated={!!generated} />
+        {generated && <CopyableMessage message={generated} />}
+      </CardContent>
+    </Card>
+  );
+};
+
+/* ── Daily Learnings Message ── */
+const LearningsMessage = ({ instituteName, tenantId }: { instituteName: string; tenantId: string }) => {
+  const [date, setDate] = useState<Date>(startOfDay(new Date()));
+  const [dateOpen, setDateOpen] = useState(false);
+  const [filterClass, setFilterClass] = useState('all');
+  const [generated, setGenerated] = useState('');
+  const [dirty, setDirty] = useState(false);
+
+  const dateStr = format(date, 'yyyy-MM-dd');
+
+  const { data: learnings = [] } = useQuery({
+    queryKey: ['learnings-msg', tenantId, dateStr],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('daily_learnings')
+        .select('class, topic, notes')
+        .eq('tenant_id', tenantId)
+        .eq('date', dateStr);
+      return data || [];
+    },
+  });
+
+  const classes = Array.from(new Set(learnings.map(l => l.class))).sort();
+
+  const setDateDirty = useCallback((d: Date) => { setDate(d); if (generated) setDirty(true); }, [generated]);
+  const setClassDirty = useCallback((v: string) => { setFilterClass(v); if (generated) setDirty(true); }, [generated]);
+
+  const generate = () => {
+    const { label } = formatDateLabelWithFull(dateStr);
+    const list = filterClass === 'all' ? learnings : learnings.filter(l => l.class === filterClass);
+
+    if (!list.length) {
+      setGenerated(`Dear Parents,\n\nNo learnings logged for ${label}.\n\n– ${instituteName}`);
+      setDirty(false);
+      return;
+    }
+
+    const grouped: Record<string, typeof list> = {};
+    list.forEach(l => { (grouped[l.class] ||= []).push(l); });
+
+    const sections = Object.keys(grouped).sort().map(cls => {
+      const items = grouped[cls].map(l => `${l.topic}`).join('\n');
+      return `${cls}:\n${items}`;
+    }).join('\n\n');
+
+    const heading = isToday(date) ? "Today's learnings" : `Learnings ${label}`;
+    setGenerated(`Dear Parents,\n\n${heading}:\n\n${sections}\n\n– ${instituteName}`);
+    setDirty(false);
+  };
+
+  return (
+    <Card>
+      <CardContent className="pt-4 space-y-4">
+        <div className="space-y-2">
+          <Label>Date</Label>
+          <Popover open={dateOpen} onOpenChange={setDateOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-full justify-start text-left font-normal">
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {format(date, 'dd MMM yyyy')}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={(d) => { if (d) { setDateDirty(startOfDay(d)); setDateOpen(false); } }}
+                disabled={(d) => d > new Date()}
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        <div className="space-y-2">
+          <Label>Class</Label>
+          <Select value={filterClass} onValueChange={setClassDirty}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Classes</SelectItem>
+              {classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <p className="text-xs text-muted-foreground">{learnings.length} learning entr{learnings.length === 1 ? 'y' : 'ies'} for selected date</p>
         <GenerateButton onClick={generate} dirty={dirty} hasGenerated={!!generated} />
         {generated && <CopyableMessage message={generated} />}
       </CardContent>
