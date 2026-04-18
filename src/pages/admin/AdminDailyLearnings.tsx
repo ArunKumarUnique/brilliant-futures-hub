@@ -213,11 +213,14 @@ const AdminDailyLearnings = () => {
             </div>
             <div>
               <Label>Student (optional)</Label>
-              <Select value={studentId} onValueChange={setStudentId}>
+              <Select
+                value={studentId || '__all__'}
+                onValueChange={(v) => setStudentId(v === '__all__' ? '' : v)}
+              >
                 <SelectTrigger><SelectValue placeholder="All students" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All students</SelectItem>
-                  {studentsForClass.map(s => (
+                  <SelectItem value="__all__">All students</SelectItem>
+                  {(studentsForClass ?? []).map(s => (
                     <SelectItem key={s.id} value={s.id}>{s.student_name}</SelectItem>
                   ))}
                 </SelectContent>
