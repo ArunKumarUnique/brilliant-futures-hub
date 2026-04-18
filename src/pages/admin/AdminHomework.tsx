@@ -61,10 +61,13 @@ const AdminHomework = () => {
   const [selectedStudent, setSelectedStudent] = useState('');
   const [assignedDate, setAssignedDate] = useState<Date>(new Date());
   const [dueDate, setDueDate] = useState<Date | undefined>();
+  const [assignedDateOpen, setAssignedDateOpen] = useState(false);
+  const [dueDateOpen, setDueDateOpen] = useState(false);
 
   // Filters
   const [filterClass, setFilterClass] = useState('all');
   const [filterDate, setFilterDate] = useState<Date | undefined>();
+  const [filterDateOpen, setFilterDateOpen] = useState(false);
 
   const fetchHomework = async () => {
     setLoading(true);
@@ -185,7 +188,7 @@ const AdminHomework = () => {
             </SelectContent>
           </Select>
         </div>
-        <Popover>
+        <Popover open={filterDateOpen} onOpenChange={setFilterDateOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className={cn("gap-2", filterDate && "text-primary")}>
               <Filter className="w-4 h-4" />
@@ -193,7 +196,13 @@ const AdminHomework = () => {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
-            <Calendar mode="single" selected={filterDate} onSelect={setFilterDate} className="p-3 pointer-events-auto" />
+            <Calendar
+              mode="single"
+              selected={filterDate}
+              onSelect={(d) => { setFilterDate(d); setFilterDateOpen(false); }}
+              disabled={(d) => d > new Date()}
+              className="p-3 pointer-events-auto"
+            />
           </PopoverContent>
         </Popover>
         {filterDate && (
@@ -286,7 +295,7 @@ const AdminHomework = () => {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Date</Label>
-                <Popover>
+                <Popover open={assignedDateOpen} onOpenChange={setAssignedDateOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-start text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -294,13 +303,19 @@ const AdminHomework = () => {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={assignedDate} onSelect={d => d && setAssignedDate(d)} className="p-3 pointer-events-auto" />
+                    <Calendar
+                      mode="single"
+                      selected={assignedDate}
+                      onSelect={d => { if (d) { setAssignedDate(d); setAssignedDateOpen(false); } }}
+                      disabled={(d) => d > new Date()}
+                      className="p-3 pointer-events-auto"
+                    />
                   </PopoverContent>
                 </Popover>
               </div>
               <div>
                 <Label>Due Date</Label>
-                <Popover>
+                <Popover open={dueDateOpen} onOpenChange={setDueDateOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-start text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -308,7 +323,13 @@ const AdminHomework = () => {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={dueDate} onSelect={setDueDate} className="p-3 pointer-events-auto" />
+                    <Calendar
+                      mode="single"
+                      selected={dueDate}
+                      onSelect={d => { setDueDate(d); setDueDateOpen(false); }}
+                      disabled={(d) => d > new Date()}
+                      className="p-3 pointer-events-auto"
+                    />
                   </PopoverContent>
                 </Popover>
               </div>
