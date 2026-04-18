@@ -270,11 +270,14 @@ const AdminHomework = () => {
             </div>
             <div>
               <Label>Student (optional – overrides class)</Label>
-              <Select value={selectedStudent} onValueChange={setSelectedStudent}>
+              <Select
+                value={selectedStudent || '__all__'}
+                onValueChange={(v) => setSelectedStudent(v === '__all__' ? '' : v)}
+              >
                 <SelectTrigger><SelectValue placeholder="All students in class" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All students in class</SelectItem>
-                  {studentsForClass.map(s => (
+                  <SelectItem value="__all__">All students in class</SelectItem>
+                  {(studentsForClass ?? []).map(s => (
                     <SelectItem key={s.id} value={s.id}>{s.student_name} ({s.class})</SelectItem>
                   ))}
                 </SelectContent>
