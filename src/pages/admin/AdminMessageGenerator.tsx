@@ -473,6 +473,7 @@ const LearningsMessage = ({ instituteName, tenantId }: { instituteName: string; 
   const [date, setDate] = useState<Date>(startOfDay(new Date()));
   const [dateOpen, setDateOpen] = useState(false);
   const [filterClass, setFilterClass] = useState('all');
+  const [filterStudent, setFilterStudent] = useState('all');
   const [generated, setGenerated] = useState('');
   const [dirty, setDirty] = useState(false);
 
@@ -483,38 +484,84 @@ const LearningsMessage = ({ instituteName, tenantId }: { instituteName: string; 
     queryFn: async () => {
       const { data } = await supabase
         .from('daily_learnings')
-        .select('class, topic, notes')
+        .select('class, topic, notes, student_id')
         .eq('tenant_id', tenantId)
         .eq('date', dateStr);
       return data || [];
     },
   });
 
+  const { data: students = [] } = useQuery({
+    queryKey: ['students-learn-msg', tenantId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('students')
+        .select('id, student_name, class')
+        .eq('tenant_id', tenantId)
+        .eq('status', 'active');
+      return data || [];
+    },
+  });
+
   const classes = Array.from(new Set(learnings.map(l => l.class))).sort();
+  const studentsForFilter = filterClass === 'all'
+    ? students
+    : students.filter(s => s.class === filterClass);
 
   const setDateDirty = useCallback((d: Date) => { setDate(d); if (generated) setDirty(true); }, [generated]);
-  const setClassDirty = useCallback((v: string) => { setFilterClass(v); if (generated) setDirty(true); }, [generated]);
+  const setClassDirty = useCallback((v: string) => { setFilterClass(v); setFilterStudent('all'); if (generated) setDirty(true); }, [generated]);
+  const setStudentDirty = useCallback((v: string) => { setFilterStudent(v); if (generated) setDirty(true); }, [generated]);
+
+  const formatItems = (items: typeof learnings) => items.map(l => l.topic).join('\n');
 
   const generate = () => {
     const { label } = formatDateLabelWithFull(dateStr);
-    const list = filterClass === 'all' ? learnings : learnings.filter(l => l.class === filterClass);
+    const todayPrefix = isToday(date) ? "Today's learnings" : `Learnings ${label}`;
 
-    if (!list.length) {
-      setGenerated(`Dear Parents,\n\nNo learnings logged for ${label}.\n\n– ${instituteName}`);
+    // Student filter takes priority
+    if (filterStudent !== 'all') {
+      const student = students.find(s => s.id === filterStudent);
+      const studentName = student?.student_name || 'your child';
+      const list = learnings.filter(l =>
+        l.student_id === filterStudent || (student && l.class === student.class && !l.student_id)
+      );
+      const heading = isToday(date) ? `Today's learnings for ${studentName}` : `Learnings for ${studentName} ${label}`;
+      if (!list.length) {
+        setGenerated(`Dear Parent,\n\nNo learning updates available for ${studentName} ${label}.\n\n– ${instituteName}`);
+      } else {
+        setGenerated(`Dear Parent,\n\n${heading}:\n\n${formatItems(list)}\n\n– ${instituteName}`);
+      }
       setDirty(false);
       return;
     }
 
-    const grouped: Record<string, typeof list> = {};
-    list.forEach(l => { (grouped[l.class] ||= []).push(l); });
+    // Class filter
+    if (filterClass !== 'all') {
+      const list = learnings.filter(l => l.class === filterClass);
+      const heading = isToday(date) ? `Today's learnings for ${filterClass}` : `Learnings for ${filterClass} ${label}`;
+      if (!list.length) {
+        setGenerated(`Dear Parents,\n\nNo learning updates available for ${filterClass} ${label}.\n\n– ${instituteName}`);
+      } else {
+        setGenerated(`Dear Parents,\n\n${heading}:\n\n${formatItems(list)}\n\n– ${instituteName}`);
+      }
+      setDirty(false);
+      return;
+    }
 
-    const sections = Object.keys(grouped).sort().map(cls => {
-      const items = grouped[cls].map(l => `${l.topic}`).join('\n');
-      return `${cls}:\n${items}`;
-    }).join('\n\n');
+    // Full tuition
+    if (!learnings.length) {
+      setGenerated(`Dear Parents,\n\nNo learning updates available ${label}.\n\n– ${instituteName}`);
+      setDirty(false);
+      return;
+    }
 
-    const heading = isToday(date) ? "Today's learnings" : `Learnings ${label}`;
-    setGenerated(`Dear Parents,\n\n${heading}:\n\n${sections}\n\n– ${instituteName}`);
+    const grouped: Record<string, typeof learnings> = {};
+    learnings.forEach(l => { (grouped[l.class] ||= []).push(l); });
+    const sections = Object.keys(grouped).sort().map(cls =>
+      `${cls}:\n${formatItems(grouped[cls])}`
+    ).join('\n\n');
+
+    setGenerated(`Dear Parents,\n\n${todayPrefix}:\n\n${sections}\n\n– ${instituteName}`);
     setDirty(false);
   };
 
@@ -522,7 +569,7 @@ const LearningsMessage = ({ instituteName, tenantId }: { instituteName: string; 
     <Card>
       <CardContent className="pt-4 space-y-4">
         <div className="space-y-2">
-          <Label>Date</Label>
+          <Label>Date <span className="text-destructive">*</span></Label>
           <Popover open={dateOpen} onOpenChange={setDateOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline" className="w-full justify-start text-left font-normal">
@@ -542,12 +589,22 @@ const LearningsMessage = ({ instituteName, tenantId }: { instituteName: string; 
           </Popover>
         </div>
         <div className="space-y-2">
-          <Label>Class</Label>
+          <Label>Class <span className="text-muted-foreground text-xs">(optional)</span></Label>
           <Select value={filterClass} onValueChange={setClassDirty}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Classes</SelectItem>
               {classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Student <span className="text-muted-foreground text-xs">(optional, overrides class)</span></Label>
+          <Select value={filterStudent} onValueChange={setStudentDirty}>
+            <SelectTrigger><SelectValue placeholder="All students" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Students</SelectItem>
+              {studentsForFilter.map(s => <SelectItem key={s.id} value={s.id}>{s.student_name} ({s.class})</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
