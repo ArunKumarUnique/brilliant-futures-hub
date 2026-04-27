@@ -46,6 +46,7 @@ const SummerCampFees = () => {
 
   const [paidDate, setPaidDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [amountPaid, setAmountPaid] = useState<string>(String(defaultFee));
 
   const fetchRows = async () => {
     setLoading(true);
@@ -112,11 +113,11 @@ const SummerCampFees = () => {
     setSelected(next);
   };
 
-  const upsertPayment = async (row: Row, status: 'paid' | 'pending') => {
+  const upsertPayment = async (row: Row, status: 'paid' | 'pending', amount: number) => {
     const payload: any = {
       tenant_id: tenantId,
       student_id: row.student_id,
-      amount: defaultFee,
+      amount,
       status,
       paid_date: status === 'paid' ? paidDate : null,
       payment_method: status === 'paid' ? paymentMethod : null,
@@ -124,7 +125,7 @@ const SummerCampFees = () => {
     if (row.payment_id) {
       const { error } = await supabase
         .from('summer_camp_payments')
-        .update({ status, paid_date: payload.paid_date, payment_method: payload.payment_method })
+        .update({ status, amount, paid_date: payload.paid_date, payment_method: payload.payment_method })
         .eq('id', row.payment_id);
       return error;
     }
@@ -134,9 +135,14 @@ const SummerCampFees = () => {
 
   const handleMarkPaid = async () => {
     if (!markStudent) return;
-    const error = await upsertPayment(markStudent, 'paid');
+    const amt = Number(amountPaid);
+    if (!amountPaid || isNaN(amt) || amt <= 0) {
+      toast({ title: 'Invalid amount', description: 'Amount must be greater than 0', variant: 'destructive' });
+      return;
+    }
+    const error = await upsertPayment(markStudent, 'paid', amt);
     if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
-    toast({ title: 'Payment marked as paid', description: markStudent.student_name });
+    toast({ title: 'Payment marked as paid', description: `${markStudent.student_name} – ₹${amt.toLocaleString('en-IN')}` });
     setMarkStudent(null);
     fetchRows();
   };
@@ -275,7 +281,7 @@ const SummerCampFees = () => {
                       <Undo2 className="w-3 h-3 mr-1" /> Revert
                     </Button>
                   ) : (
-                    <Button size="sm" variant="outline" onClick={() => { setMarkStudent(r); setPaidDate(new Date().toISOString().split('T')[0]); }}>
+                    <Button size="sm" variant="outline" onClick={() => { setMarkStudent(r); setPaidDate(new Date().toISOString().split('T')[0]); setAmountPaid(String(defaultFee)); }}>
                       <Check className="w-3 h-3 mr-1" /> Mark Paid
                     </Button>
                   )}
@@ -309,7 +315,19 @@ const SummerCampFees = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="text-sm text-muted-foreground">Amount: ₹{defaultFee.toLocaleString('en-IN')}</div>
+            <div className="space-y-1.5">
+              <Label>Amount Paid (₹) *</Label>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min="1"
+                step="1"
+                value={amountPaid}
+                onChange={e => setAmountPaid(e.target.value)}
+                placeholder={String(defaultFee)}
+              />
+              <p className="text-xs text-muted-foreground">Default: ₹{defaultFee.toLocaleString('en-IN')} • Edit for partial payments</p>
+            </div>
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setMarkStudent(null)}>Cancel</Button>
               <Button onClick={handleMarkPaid}>Confirm</Button>
