@@ -6,8 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import FeeTracker from '@/components/admin/FeeTracker';
+import SummerCampFees from '@/components/admin/SummerCampFees';
+import ReceiptGenerator from '@/components/admin/ReceiptGenerator';
+import CertificateGenerator from '@/components/admin/CertificateGenerator';
+import { Receipt, Sparkles, FileText, Award } from 'lucide-react';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -21,7 +26,7 @@ interface StudentWithFee {
   fee_status: string;
 }
 
-const AdminFees = () => {
+const MonthlyFeesTab = () => {
   const { config, tr } = useTenant();
   const { language } = useLanguage();
   const tenantId = config.id;
@@ -51,12 +56,7 @@ const AdminFees = () => {
       setLoading(false);
       return;
     }
-
-    if (!allStudents?.length) {
-      setStudents([]);
-      setLoading(false);
-      return;
-    }
+    if (!allStudents?.length) { setStudents([]); setLoading(false); return; }
 
     const { data: feeData } = await supabase
       .from('fee_records')
@@ -78,11 +78,8 @@ const AdminFees = () => {
       fee_status: feeMap[s.id] || 'pending',
     }));
 
-    if (statusFilter !== 'all') {
-      setStudents(result.filter(s => s.fee_status === statusFilter));
-    } else {
-      setStudents(result);
-    }
+    if (statusFilter !== 'all') setStudents(result.filter(s => s.fee_status === statusFilter));
+    else setStudents(result);
     setLoading(false);
   };
 
@@ -108,9 +105,6 @@ const AdminFees = () => {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Fee Tracking</h1>
-
-      {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-5">
         <Select value={month} onValueChange={setMonth}>
           <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
@@ -136,14 +130,14 @@ const AdminFees = () => {
         </Select>
       </div>
 
-      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-card border border-border rounded-xl overflow-x-auto shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Student Name</TableHead>
-              <TableHead>Class</TableHead>
-              <TableHead>Package</TableHead>
-              <TableHead>Monthly Fee</TableHead>
+              <TableHead className="hidden sm:table-cell">Class</TableHead>
+              <TableHead className="hidden md:table-cell">Package</TableHead>
+              <TableHead>Fee</TableHead>
               <TableHead>Status ({MONTHS[Number(month) - 1]})</TableHead>
               <TableHead>Action</TableHead>
             </TableRow>
@@ -157,8 +151,8 @@ const AdminFees = () => {
               students.map(s => (
                 <TableRow key={s.id}>
                   <TableCell className="font-medium">{s.student_name}</TableCell>
-                  <TableCell>{s.class}</TableCell>
-                  <TableCell className="max-w-[150px] truncate text-sm">{getPackageName(s.package_id)}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{s.class}</TableCell>
+                  <TableCell className="hidden md:table-cell max-w-[150px] truncate text-sm">{getPackageName(s.package_id)}</TableCell>
                   <TableCell>₹{s.monthly_fee}</TableCell>
                   <TableCell>
                     <Badge variant={s.fee_status === 'paid' ? 'default' : 'destructive'} className={s.fee_status === 'paid' ? 'bg-secondary text-secondary-foreground' : ''}>
@@ -166,7 +160,7 @@ const AdminFees = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button size="sm" variant="outline" onClick={() => setViewingFees(s)}>View Fees</Button>
+                    <Button size="sm" variant="outline" onClick={() => setViewingFees(s)}>View</Button>
                   </TableCell>
                 </TableRow>
               ))
@@ -174,6 +168,38 @@ const AdminFees = () => {
           </TableBody>
         </Table>
       </div>
+    </div>
+  );
+};
+
+const AdminFees = () => {
+  const [tab, setTab] = useState('monthly');
+
+  return (
+    <div>
+      <h1 className="text-2xl font-bold text-foreground mb-4">Fee Tracking</h1>
+
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="w-full grid grid-cols-2 sm:grid-cols-4 h-auto">
+          <TabsTrigger value="monthly" className="flex-col sm:flex-row gap-1 py-2.5 text-xs sm:text-sm">
+            <Receipt className="w-4 h-4" /> Monthly
+          </TabsTrigger>
+          <TabsTrigger value="summer" className="flex-col sm:flex-row gap-1 py-2.5 text-xs sm:text-sm">
+            <Sparkles className="w-4 h-4" /> Summer Camp
+          </TabsTrigger>
+          <TabsTrigger value="receipt" className="flex-col sm:flex-row gap-1 py-2.5 text-xs sm:text-sm">
+            <FileText className="w-4 h-4" /> Receipt
+          </TabsTrigger>
+          <TabsTrigger value="certificate" className="flex-col sm:flex-row gap-1 py-2.5 text-xs sm:text-sm">
+            <Award className="w-4 h-4" /> Certificate
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="monthly" className="mt-5"><MonthlyFeesTab /></TabsContent>
+        <TabsContent value="summer" className="mt-5"><SummerCampFees /></TabsContent>
+        <TabsContent value="receipt" className="mt-5"><ReceiptGenerator /></TabsContent>
+        <TabsContent value="certificate" className="mt-5"><CertificateGenerator /></TabsContent>
+      </Tabs>
     </div>
   );
 };
