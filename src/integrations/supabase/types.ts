@@ -96,6 +96,54 @@ export type Database = {
           },
         ]
       }
+      fee_receipts: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          is_summer_camp: boolean
+          month: number | null
+          package_id: string
+          package_name: string
+          paid_date: string
+          payment_method: string | null
+          receipt_no: string
+          student_id: string
+          tenant_id: string
+          year: number | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          is_summer_camp?: boolean
+          month?: number | null
+          package_id: string
+          package_name: string
+          paid_date: string
+          payment_method?: string | null
+          receipt_no: string
+          student_id: string
+          tenant_id: string
+          year?: number | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          is_summer_camp?: boolean
+          month?: number | null
+          package_id?: string
+          package_name?: string
+          paid_date?: string
+          payment_method?: string | null
+          receipt_no?: string
+          student_id?: string
+          tenant_id?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
       fee_records: {
         Row: {
           amount: number
@@ -247,6 +295,45 @@ export type Database = {
           student_name?: string
           tenant_id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      summer_camp_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          paid_date: string | null
+          payment_method: string | null
+          status: string
+          student_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_date?: string | null
+          payment_method?: string | null
+          status?: string
+          student_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_date?: string | null
+          payment_method?: string | null
+          status?: string
+          student_id?: string
+          tenant_id?: string
+          updated_at?: string
         }
         Relationships: []
       }

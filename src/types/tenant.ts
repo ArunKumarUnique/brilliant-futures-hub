@@ -86,6 +86,9 @@ export interface TuitionPackage {
   subjects?: Translatable[];
   pricing: PackagePricing[];
   popular?: boolean;
+  special?: boolean;
+  specialLabel?: Translatable;
+  flatFee?: number;
 }
 
 export interface TenantConfig {

@@ -119,6 +119,21 @@ const config: TenantConfig = {
         ],
       },
       {
+        id: 'summer-camp',
+        title: { en: 'Summer Camp', te: 'సమ్మర్ క్యాంప్' },
+        special: true,
+        specialLabel: { en: 'Special Program', te: 'ప్రత్యేక ప్రోగ్రామ్' },
+        flatFee: 1500,
+        subjects: [
+          { en: 'Handwriting & Spoken English', te: 'హ్యాండ్‌రైటింగ్ & స్పోకెన్ ఇంగ్లీష్' },
+          { en: 'Abacus & Mental Maths', te: 'అబాకస్ & మెంటల్ మ్యాథ్స్' },
+          { en: 'Art, Craft & Public Speaking', te: 'ఆర్ట్, క్రాఫ్ట్ & పబ్లిక్ స్పీకింగ్' },
+        ],
+        pricing: [
+          { class: { en: 'All Classes (One-time)', te: 'అన్ని తరగతులు (ఒకేసారి)' }, fee: '₹1500 / program' },
+        ],
+      },
+      {
         id: 'combo-package',
         title: { en: 'State Board + JEE + Skill Development', te: 'స్టేట్ బోర్డ్ + JEE + స్కిల్ డెవలప్‌మెంట్' },
         popular: true,
