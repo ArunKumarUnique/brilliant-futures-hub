@@ -179,10 +179,13 @@ const ReceiptGenerator = () => {
   };
 
   const download = () => {
-    if (!previewUrl || !lastReceiptNo) return;
+    if (!previewUrl || !lastReceiptNo || !selectedStudent) return;
     const a = document.createElement('a');
     a.href = previewUrl;
-    a.download = `Receipt-${lastReceiptNo}.pdf`;
+    const safeName = selectedStudent.student_name.trim().replace(/\s+/g, '_');
+    a.download = isSummerCamp
+      ? `${safeName}_summer_camp_payment.pdf`
+      : `${safeName}_fee_receipt_${lastReceiptNo}.pdf`;
     a.click();
   };
 

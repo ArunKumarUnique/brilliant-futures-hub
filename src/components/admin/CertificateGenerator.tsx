@@ -79,7 +79,8 @@ const CertificateGenerator = () => {
     if (!previewUrl || !selectedStudent) return;
     const a = document.createElement('a');
     a.href = previewUrl;
-    a.download = `Certificate-${selectedStudent.student_name.replace(/\s+/g, '_')}.pdf`;
+    const safeName = selectedStudent.student_name.trim().replace(/\s+/g, '_');
+    a.download = `${safeName}_summer_camp_certificate.pdf`;
     a.click();
   };
 
