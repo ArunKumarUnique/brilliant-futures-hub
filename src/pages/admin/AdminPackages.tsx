@@ -1,6 +1,6 @@
 import { useTenant } from '@/contexts/TenantContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Check } from 'lucide-react';
+import { Check, Sparkles, Star } from 'lucide-react';
 
 const AdminPackages = () => {
   const { config } = useTenant();
@@ -14,8 +14,18 @@ const AdminPackages = () => {
       {packages ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {packages.items.map((pkg) => (
-            <div key={pkg.id} className="bg-card border border-border rounded-xl p-5 shadow-sm">
-              <h3 className="font-semibold text-foreground mb-3">{tr(pkg.title)}</h3>
+            <div key={pkg.id} className={`relative bg-card border rounded-xl p-5 shadow-sm ${pkg.special ? 'border-amber-400 ring-1 ring-amber-300' : 'border-border'}`}>
+              {pkg.special && (
+                <span className="absolute -top-2 right-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" /> Special
+                </span>
+              )}
+              {pkg.popular && (
+                <span className="absolute -top-2 right-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Star className="w-3 h-3" /> Popular
+                </span>
+              )}
+              <h3 className="font-semibold text-foreground mb-3 pr-16">{tr(pkg.title)}</h3>
               {pkg.subjects && (
                 <div className="flex flex-wrap gap-1.5 mb-3">
                   {pkg.subjects.map((s, i) => (
