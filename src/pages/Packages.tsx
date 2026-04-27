@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTenant } from '@/contexts/TenantContext';
-import { Check, Star } from 'lucide-react';
+import { Check, Star, Sparkles } from 'lucide-react';
 
 const Packages = () => {
   const { tr, t } = useLanguage();
@@ -28,13 +28,19 @@ const Packages = () => {
               <div
                 key={pkg.id}
                 className={`relative rounded-2xl border bg-card text-card-foreground shadow-lg overflow-hidden transition-transform hover:scale-[1.02] ${
-                  pkg.popular ? 'ring-2 ring-primary' : ''
+                  pkg.popular ? 'ring-2 ring-primary' : pkg.special ? 'ring-2 ring-secondary' : ''
                 }`}
               >
                 {pkg.popular && (
                   <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-4 py-1.5 text-xs font-semibold rounded-bl-xl flex items-center gap-1">
                     <Star className="w-3.5 h-3.5" />
                     Most Popular
+                  </div>
+                )}
+                {pkg.special && !pkg.popular && (
+                  <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-1.5 text-xs font-semibold rounded-bl-xl flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {pkg.specialLabel ? tr(pkg.specialLabel) : 'Special Program'}
                   </div>
                 )}
 
