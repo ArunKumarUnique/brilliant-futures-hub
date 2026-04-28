@@ -69,7 +69,7 @@ const AdminStudents = () => {
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
-      setStudents(data || []);
+      setStudents((data || []) as Student[]);
       // Fetch current month fee statuses
       if (data && data.length > 0) {
         const currentMonth = new Date().getMonth() + 1;
