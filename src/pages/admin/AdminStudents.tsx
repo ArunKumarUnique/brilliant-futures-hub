@@ -162,12 +162,16 @@ const AdminStudents = () => {
 
   const filtered = useMemo(() => {
     return students.filter(s => {
+      if ((s.student_type || 'regular') !== typeTab) return false;
       if (search && !s.student_name.toLowerCase().includes(search.toLowerCase())) return false;
       if (filterClass !== 'all' && s.class !== filterClass) return false;
       if (filterPackage !== 'all' && s.package_id !== filterPackage) return false;
       return true;
     });
-  }, [students, search, filterClass, filterPackage]);
+  }, [students, search, filterClass, filterPackage, typeTab]);
+
+  const regularCount = useMemo(() => students.filter(s => (s.student_type || 'regular') === 'regular').length, [students]);
+  const summerCount = useMemo(() => students.filter(s => s.student_type === 'summer_camp').length, [students]);
 
   if (viewingFees) {
     return (
