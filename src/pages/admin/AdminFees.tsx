@@ -49,6 +49,7 @@ const MonthlyFeesTab = () => {
       .select('*')
       .eq('tenant_id', tenantId)
       .eq('status', 'active')
+      .or('student_type.eq.regular,student_type.is.null')
       .order('student_name');
 
     if (error) {
