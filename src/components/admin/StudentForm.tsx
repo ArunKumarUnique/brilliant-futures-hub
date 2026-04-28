@@ -9,6 +9,8 @@ import { useTenant } from '@/contexts/TenantContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 
+export type StudentType = 'regular' | 'summer_camp';
+
 export interface StudentFormData {
   student_name: string;
   parent_name: string;
@@ -21,6 +23,7 @@ export interface StudentFormData {
   monthly_fee: number;
   admission_date: string;
   status: string;
+  student_type: StudentType;
   notes: string;
 }
 
