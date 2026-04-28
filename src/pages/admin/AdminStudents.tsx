@@ -130,8 +130,9 @@ const AdminStudents = () => {
       monthly_fee: data.monthly_fee,
       admission_date: data.admission_date || null,
       status: data.status,
+      student_type: data.student_type,
       notes: data.notes.trim() || null,
-    }).eq('id', editingStudent.id);
+    } as any).eq('id', editingStudent.id);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
