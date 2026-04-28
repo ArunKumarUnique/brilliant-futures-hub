@@ -147,11 +147,15 @@ const AdminAttendance = () => {
   const saveAttendance = async () => {
     setSaving(true);
     try {
-      await supabase
-        .from('attendance')
-        .delete()
-        .eq('tenant_id', tenantId)
-        .eq('date', date);
+      const studentIds = students.map(s => s.id);
+      if (studentIds.length > 0) {
+        await supabase
+          .from('attendance')
+          .delete()
+          .eq('tenant_id', tenantId)
+          .eq('date', date)
+          .in('student_id', studentIds);
+      }
 
       const records = students.map(s => ({
         student_id: s.id,
