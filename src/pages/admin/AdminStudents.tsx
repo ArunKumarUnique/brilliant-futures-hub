@@ -297,6 +297,7 @@ const AdminStudents = () => {
         open={formOpen}
         onClose={() => setFormOpen(false)}
         onSubmit={handleAdd}
+        defaultStudentType={typeTab}
       />
 
       {/* Edit Form */}
