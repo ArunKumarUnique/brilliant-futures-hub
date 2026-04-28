@@ -34,6 +34,7 @@ interface StudentFormProps {
   onSubmit: (data: StudentFormData) => void;
   initialData?: StudentFormData | null;
   isEditing?: boolean;
+  defaultStudentType?: StudentType;
 }
 
 const CLASS_OPTIONS = [
