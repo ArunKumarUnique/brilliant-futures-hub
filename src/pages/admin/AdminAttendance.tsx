@@ -43,6 +43,7 @@ const AdminAttendance = () => {
 
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
+  const [studentType, setStudentType] = useState<StudentType>('regular');
   const [students, setStudents] = useState<Student[]>([]);
   const [presentIds, setPresentIds] = useState<Set<string>>(new Set());
   const [arrivalTimes, setArrivalTimes] = useState<ArrivalTimes>({});
@@ -59,12 +60,17 @@ const AdminAttendance = () => {
     setLoading(true);
     setSaved(false);
 
-    const { data: studentData } = await supabase
+    let query = supabase
       .from('students')
-      .select('id, student_name, class, parent_mobile, parent_email')
+      .select('id, student_name, class, parent_mobile, parent_email, student_type')
       .eq('tenant_id', tenantId)
-      .eq('status', 'active')
-      .order('student_name');
+      .eq('status', 'active');
+    if (studentType === 'summer_camp') {
+      query = query.eq('student_type', 'summer_camp');
+    } else {
+      query = query.or('student_type.eq.regular,student_type.is.null');
+    }
+    const { data: studentData } = await query.order('student_name');
 
     const allStudents = (studentData || []) as Student[];
     setStudents(allStudents);
