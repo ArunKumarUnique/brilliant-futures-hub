@@ -42,7 +42,7 @@ const CLASS_OPTIONS = [
   '8th Class', '9th Class', '10th Class',
 ];
 
-const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing }: StudentFormProps) => {
+const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultStudentType }: StudentFormProps) => {
   const { config, tr } = useTenant();
   const { language } = useLanguage();
   const packages = config.packages?.items || [];
@@ -59,7 +59,7 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing }: Studen
     monthly_fee: 0,
     admission_date: new Date().toISOString().split('T')[0],
     status: 'active',
-    student_type: 'regular',
+    student_type: defaultStudentType || 'regular',
     notes: '',
   };
 
@@ -67,9 +67,10 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing }: Studen
 
   useEffect(() => {
     if (open) {
-      setForm(initialData || emptyForm);
+      setForm(initialData || { ...emptyForm, student_type: defaultStudentType || 'regular' });
     }
-  }, [open, initialData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialData, defaultStudentType]);
 
   const handleChange = (field: keyof StudentFormData, value: string | number) => {
     setForm(prev => ({ ...prev, [field]: value }));
