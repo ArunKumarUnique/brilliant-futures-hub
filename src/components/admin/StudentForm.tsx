@@ -57,6 +57,7 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing }: Studen
     monthly_fee: 0,
     admission_date: new Date().toISOString().split('T')[0],
     status: 'active',
+    student_type: 'regular',
     notes: '',
   };
 
