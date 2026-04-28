@@ -47,6 +47,7 @@ const AdminStudents = () => {
   const [search, setSearch] = useState('');
   const [filterClass, setFilterClass] = useState('all');
   const [filterPackage, setFilterPackage] = useState('all');
+  const [typeTab, setTypeTab] = useState<StudentType>('regular');
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
