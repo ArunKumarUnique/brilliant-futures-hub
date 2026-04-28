@@ -4,10 +4,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useTenant } from '@/contexts/TenantContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
+
+export type StudentType = 'regular' | 'summer_camp';
 
 export interface StudentFormData {
   student_name: string;
@@ -21,6 +24,7 @@ export interface StudentFormData {
   monthly_fee: number;
   admission_date: string;
   status: string;
+  student_type: StudentType;
   notes: string;
 }
 
@@ -30,6 +34,7 @@ interface StudentFormProps {
   onSubmit: (data: StudentFormData) => void;
   initialData?: StudentFormData | null;
   isEditing?: boolean;
+  defaultStudentType?: StudentType;
 }
 
 const CLASS_OPTIONS = [
@@ -37,7 +42,7 @@ const CLASS_OPTIONS = [
   '8th Class', '9th Class', '10th Class',
 ];
 
-const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing }: StudentFormProps) => {
+const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultStudentType }: StudentFormProps) => {
   const { config, tr } = useTenant();
   const { language } = useLanguage();
   const packages = config.packages?.items || [];
@@ -54,6 +59,7 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing }: Studen
     monthly_fee: 0,
     admission_date: new Date().toISOString().split('T')[0],
     status: 'active',
+    student_type: defaultStudentType || 'regular',
     notes: '',
   };
 
@@ -61,9 +67,10 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing }: Studen
 
   useEffect(() => {
     if (open) {
-      setForm(initialData || emptyForm);
+      setForm(initialData || { ...emptyForm, student_type: defaultStudentType || 'regular' });
     }
-  }, [open, initialData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialData, defaultStudentType]);
 
   const handleChange = (field: keyof StudentFormData, value: string | number) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -87,6 +94,10 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing }: Studen
       toast({ title: 'Validation Error', description: 'Package is required', variant: 'destructive' });
       return;
     }
+    if (!form.student_type || (form.student_type !== 'regular' && form.student_type !== 'summer_camp')) {
+      toast({ title: 'Validation Error', description: 'Student Type is required', variant: 'destructive' });
+      return;
+    }
     onSubmit(form);
   };
 
@@ -97,6 +108,23 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing }: Studen
           <DialogTitle>{isEditing ? 'Edit Student' : 'Add New Student'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>Student Type *</Label>
+            <RadioGroup
+              value={form.student_type}
+              onValueChange={(v) => handleChange('student_type', v as 'regular' | 'summer_camp')}
+              className="flex flex-wrap gap-4 pt-1"
+            >
+              <label className="flex items-center gap-2 cursor-pointer">
+                <RadioGroupItem value="regular" id="type-regular" />
+                <span className="text-sm">Regular Student</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <RadioGroupItem value="summer_camp" id="type-summer" />
+                <span className="text-sm">Summer Camp Student</span>
+              </label>
+            </RadioGroup>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Student Name *</Label>

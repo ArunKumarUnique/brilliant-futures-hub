@@ -7,10 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Search, Eye, Pencil, Trash2 } from 'lucide-react';
-import StudentForm, { StudentFormData } from '@/components/admin/StudentForm';
+import { Plus, Search, Eye, Pencil, Trash2, Users, Sparkles } from 'lucide-react';
+import StudentForm, { StudentFormData, StudentType } from '@/components/admin/StudentForm';
 import FeeTracker from '@/components/admin/FeeTracker';
 
 interface Student {
@@ -26,6 +27,7 @@ interface Student {
   monthly_fee: number;
   admission_date: string | null;
   status: string;
+  student_type: StudentType;
   notes: string | null;
 }
 
@@ -45,6 +47,7 @@ const AdminStudents = () => {
   const [search, setSearch] = useState('');
   const [filterClass, setFilterClass] = useState('all');
   const [filterPackage, setFilterPackage] = useState('all');
+  const [typeTab, setTypeTab] = useState<StudentType>('regular');
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
@@ -67,7 +70,7 @@ const AdminStudents = () => {
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
-      setStudents(data || []);
+      setStudents((data || []) as Student[]);
       // Fetch current month fee statuses
       if (data && data.length > 0) {
         const currentMonth = new Date().getMonth() + 1;
@@ -101,8 +104,9 @@ const AdminStudents = () => {
       monthly_fee: data.monthly_fee,
       admission_date: data.admission_date || null,
       status: data.status,
+      student_type: data.student_type,
       notes: data.notes.trim() || null,
-    });
+    } as any);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
@@ -126,8 +130,9 @@ const AdminStudents = () => {
       monthly_fee: data.monthly_fee,
       admission_date: data.admission_date || null,
       status: data.status,
+      student_type: data.student_type,
       notes: data.notes.trim() || null,
-    }).eq('id', editingStudent.id);
+    } as any).eq('id', editingStudent.id);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
@@ -157,12 +162,16 @@ const AdminStudents = () => {
 
   const filtered = useMemo(() => {
     return students.filter(s => {
+      if ((s.student_type || 'regular') !== typeTab) return false;
       if (search && !s.student_name.toLowerCase().includes(search.toLowerCase())) return false;
       if (filterClass !== 'all' && s.class !== filterClass) return false;
       if (filterPackage !== 'all' && s.package_id !== filterPackage) return false;
       return true;
     });
-  }, [students, search, filterClass, filterPackage]);
+  }, [students, search, filterClass, filterPackage, typeTab]);
+
+  const regularCount = useMemo(() => students.filter(s => (s.student_type || 'regular') === 'regular').length, [students]);
+  const summerCount = useMemo(() => students.filter(s => s.student_type === 'summer_camp').length, [students]);
 
   if (viewingFees) {
     return (
@@ -184,6 +193,18 @@ const AdminStudents = () => {
           <Plus className="w-4 h-4 mr-1" /> Add Student
         </Button>
       </div>
+
+      {/* Type Tabs */}
+      <Tabs value={typeTab} onValueChange={(v) => setTypeTab(v as StudentType)} className="mb-4">
+        <TabsList className="w-full grid grid-cols-2 h-auto">
+          <TabsTrigger value="regular" className="gap-1.5 py-2.5 text-xs sm:text-sm">
+            <Users className="w-4 h-4" /> Regular Students ({regularCount})
+          </TabsTrigger>
+          <TabsTrigger value="summer_camp" className="gap-1.5 py-2.5 text-xs sm:text-sm">
+            <Sparkles className="w-4 h-4" /> Summer Camp ({summerCount})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-5">
@@ -276,6 +297,7 @@ const AdminStudents = () => {
         open={formOpen}
         onClose={() => setFormOpen(false)}
         onSubmit={handleAdd}
+        defaultStudentType={typeTab}
       />
 
       {/* Edit Form */}
@@ -296,6 +318,7 @@ const AdminStudents = () => {
           monthly_fee: editingStudent.monthly_fee,
           admission_date: editingStudent.admission_date || '',
           status: editingStudent.status,
+          student_type: (editingStudent.student_type as StudentType) || 'regular',
           notes: editingStudent.notes || '',
         } : null}
       />

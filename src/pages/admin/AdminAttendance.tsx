@@ -9,7 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { CheckCircle2, Circle, Save, Users, UserX, UserCheck, Bell, Copy, CheckCheck, Clock, FileText } from 'lucide-react';
+import { CheckCircle2, Circle, Save, Users, UserX, UserCheck, Bell, Copy, CheckCheck, Clock, FileText, Sparkles } from 'lucide-react';
+
+type StudentType = 'regular' | 'summer_camp';
 
 interface Student {
   id: string;
@@ -41,6 +43,7 @@ const AdminAttendance = () => {
 
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
+  const [studentType, setStudentType] = useState<StudentType>('regular');
   const [students, setStudents] = useState<Student[]>([]);
   const [presentIds, setPresentIds] = useState<Set<string>>(new Set());
   const [arrivalTimes, setArrivalTimes] = useState<ArrivalTimes>({});
@@ -57,26 +60,34 @@ const AdminAttendance = () => {
     setLoading(true);
     setSaved(false);
 
-    const { data: studentData } = await supabase
+    let query = supabase
       .from('students')
-      .select('id, student_name, class, parent_mobile, parent_email')
+      .select('id, student_name, class, parent_mobile, parent_email, student_type')
       .eq('tenant_id', tenantId)
-      .eq('status', 'active')
-      .order('student_name');
+      .eq('status', 'active');
+    if (studentType === 'summer_camp') {
+      query = query.eq('student_type', 'summer_camp');
+    } else {
+      query = query.or('student_type.eq.regular,student_type.is.null');
+    }
+    const { data: studentData } = await query.order('student_name');
 
     const allStudents = (studentData || []) as Student[];
     setStudents(allStudents);
 
     if (allStudents.length > 0) {
+      const studentIdSet = new Set(allStudents.map(s => s.id));
       const { data: attendanceData } = await supabase
         .from('attendance')
         .select('student_id, status, arrival_time')
         .eq('tenant_id', tenantId)
-        .eq('date', date);
+        .eq('date', date)
+        .in('student_id', allStudents.map(s => s.id));
 
       const present = new Set<string>();
       const times: ArrivalTimes = {};
       attendanceData?.forEach((a: any) => {
+        if (!studentIdSet.has(a.student_id)) return;
         if (a.status === 'present') {
           present.add(a.student_id);
           if (a.arrival_time) times[a.student_id] = a.arrival_time.slice(0, 5);
@@ -96,7 +107,7 @@ const AdminAttendance = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [tenantId, date]);
+  useEffect(() => { fetchData(); }, [tenantId, date, studentType]);
 
   const togglePresent = (id: string) => {
     setSaved(false);
@@ -139,11 +150,15 @@ const AdminAttendance = () => {
   const saveAttendance = async () => {
     setSaving(true);
     try {
-      await supabase
-        .from('attendance')
-        .delete()
-        .eq('tenant_id', tenantId)
-        .eq('date', date);
+      const studentIds = students.map(s => s.id);
+      if (studentIds.length > 0) {
+        await supabase
+          .from('attendance')
+          .delete()
+          .eq('tenant_id', tenantId)
+          .eq('date', date)
+          .in('student_id', studentIds);
+      }
 
       const records = students.map(s => ({
         student_id: s.id,
@@ -234,6 +249,18 @@ const AdminAttendance = () => {
           className="border border-input rounded-lg px-3 py-2 text-sm bg-background text-foreground"
         />
       </div>
+
+      {/* Type Toggle */}
+      <Tabs value={studentType} onValueChange={(v) => setStudentType(v as StudentType)} className="mb-4">
+        <TabsList className="w-full grid grid-cols-2 h-auto">
+          <TabsTrigger value="regular" className="gap-1.5 py-2 text-xs sm:text-sm">
+            <Users className="w-4 h-4" /> Regular
+          </TabsTrigger>
+          <TabsTrigger value="summer_camp" className="gap-1.5 py-2 text-xs sm:text-sm">
+            <Sparkles className="w-4 h-4" /> Summer Camp
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Stats bar */}
       <div className="grid grid-cols-3 gap-3 mb-4">
