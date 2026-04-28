@@ -27,6 +27,7 @@ interface Student {
   monthly_fee: number;
   admission_date: string | null;
   status: string;
+  student_type: StudentType;
   notes: string | null;
 }
 
