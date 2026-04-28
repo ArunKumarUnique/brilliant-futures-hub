@@ -92,6 +92,10 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing }: Studen
       toast({ title: 'Validation Error', description: 'Package is required', variant: 'destructive' });
       return;
     }
+    if (!form.student_type || (form.student_type !== 'regular' && form.student_type !== 'summer_camp')) {
+      toast({ title: 'Validation Error', description: 'Student Type is required', variant: 'destructive' });
+      return;
+    }
     onSubmit(form);
   };
 
