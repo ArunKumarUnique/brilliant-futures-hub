@@ -9,7 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { CheckCircle2, Circle, Save, Users, UserX, UserCheck, Bell, Copy, CheckCheck, Clock, FileText } from 'lucide-react';
+import { CheckCircle2, Circle, Save, Users, UserX, UserCheck, Bell, Copy, CheckCheck, Clock, FileText, Sparkles } from 'lucide-react';
+
+type StudentType = 'regular' | 'summer_camp';
 
 interface Student {
   id: string;
