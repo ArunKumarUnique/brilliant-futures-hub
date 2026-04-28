@@ -52,9 +52,10 @@ const SummerCampFees = () => {
     setLoading(true);
     const { data: students, error } = await supabase
       .from('students')
-      .select('id, student_name, parent_name, parent_mobile, class, status')
+      .select('id, student_name, parent_name, parent_mobile, class, status, student_type')
       .eq('tenant_id', tenantId)
       .eq('status', 'active')
+      .eq('student_type', 'summer_camp')
       .order('student_name');
     if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); setLoading(false); return; }
 
