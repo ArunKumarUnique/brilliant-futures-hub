@@ -317,6 +317,7 @@ const AdminStudents = () => {
           monthly_fee: editingStudent.monthly_fee,
           admission_date: editingStudent.admission_date || '',
           status: editingStudent.status,
+          student_type: (editingStudent.student_type as StudentType) || 'regular',
           notes: editingStudent.notes || '',
         } : null}
       />
