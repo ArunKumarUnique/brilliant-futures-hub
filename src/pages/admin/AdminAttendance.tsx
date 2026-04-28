@@ -76,15 +76,18 @@ const AdminAttendance = () => {
     setStudents(allStudents);
 
     if (allStudents.length > 0) {
+      const studentIdSet = new Set(allStudents.map(s => s.id));
       const { data: attendanceData } = await supabase
         .from('attendance')
         .select('student_id, status, arrival_time')
         .eq('tenant_id', tenantId)
-        .eq('date', date);
+        .eq('date', date)
+        .in('student_id', allStudents.map(s => s.id));
 
       const present = new Set<string>();
       const times: ArrivalTimes = {};
       attendanceData?.forEach((a: any) => {
+        if (!studentIdSet.has(a.student_id)) return;
         if (a.status === 'present') {
           present.add(a.student_id);
           if (a.arrival_time) times[a.student_id] = a.arrival_time.slice(0, 5);
