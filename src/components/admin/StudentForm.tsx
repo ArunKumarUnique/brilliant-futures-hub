@@ -106,6 +106,23 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing }: Studen
           <DialogTitle>{isEditing ? 'Edit Student' : 'Add New Student'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>Student Type *</Label>
+            <RadioGroup
+              value={form.student_type}
+              onValueChange={(v) => handleChange('student_type', v as 'regular' | 'summer_camp')}
+              className="flex flex-wrap gap-4 pt-1"
+            >
+              <label className="flex items-center gap-2 cursor-pointer">
+                <RadioGroupItem value="regular" id="type-regular" />
+                <span className="text-sm">Regular Student</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <RadioGroupItem value="summer_camp" id="type-summer" />
+                <span className="text-sm">Summer Camp Student</span>
+              </label>
+            </RadioGroup>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Student Name *</Label>
