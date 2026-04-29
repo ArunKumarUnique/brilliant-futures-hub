@@ -72,14 +72,20 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialData, defaultStudentType]);
 
+  const sanitizeMobile = (v: string) => v.replace(/\D/g, '').slice(0, 10);
+
   const handleChange = (field: keyof StudentFormData, value: string | number) => {
     setForm(prev => {
-      const next = { ...prev, [field]: value } as StudentFormData;
+      let v = value;
+      if ((field === 'student_mobile' || field === 'parent_mobile') && typeof v === 'string') {
+        v = sanitizeMobile(v);
+      }
+      const next = { ...prev, [field]: v } as StudentFormData;
       // Auto-sync student type when summer-camp package is selected
       if (field === 'package_id') {
-        if (value === 'summer-camp') {
+        if (v === 'summer-camp') {
           next.student_type = 'summer_camp';
-        } else if (prev.package_id === 'summer-camp' && value !== 'summer-camp') {
+        } else if (prev.package_id === 'summer-camp' && v !== 'summer-camp') {
           next.student_type = 'regular';
         }
       }
@@ -87,14 +93,28 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
     });
   };
 
+  const isValidMobile = (m: string) => /^\d{10}$/.test(m);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.student_name.trim()) {
       toast({ title: 'Validation Error', description: 'Student Name is required', variant: 'destructive' });
       return;
     }
+    if (!form.parent_name.trim()) {
+      toast({ title: 'Validation Error', description: 'Parent Name is required', variant: 'destructive' });
+      return;
+    }
     if (!form.parent_mobile.trim()) {
       toast({ title: 'Validation Error', description: 'Parent Mobile is required', variant: 'destructive' });
+      return;
+    }
+    if (!isValidMobile(form.parent_mobile.trim())) {
+      toast({ title: 'Validation Error', description: 'Enter valid 10-digit mobile number', variant: 'destructive' });
+      return;
+    }
+    if (form.student_mobile.trim() && !isValidMobile(form.student_mobile.trim())) {
+      toast({ title: 'Validation Error', description: 'Enter valid 10-digit mobile number', variant: 'destructive' });
       return;
     }
     if (!form.class) {
