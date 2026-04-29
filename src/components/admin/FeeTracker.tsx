@@ -39,6 +39,7 @@ const FeeTracker = ({ studentId, studentName, monthlyFee, year, onBack }: FeeTra
   const [revertMonth, setRevertMonth] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [paidDate, setPaidDate] = useState(new Date().toISOString().split('T')[0]);
+  const [amountPaid, setAmountPaid] = useState<string>(String(monthlyFee));
 
   const fetchFees = async () => {
     const { data, error } = await supabase
@@ -61,22 +62,27 @@ const FeeTracker = ({ studentId, studentName, monthlyFee, year, onBack }: FeeTra
 
   const handleMarkPaid = async () => {
     if (markPaidMonth === null) return;
+    const amt = Number(amountPaid);
+    if (!amountPaid || isNaN(amt) || amt <= 0) {
+      toast({ title: 'Invalid amount', description: 'Amount Paid is required and must be greater than 0', variant: 'destructive' });
+      return;
+    }
     const existing = getFeeForMonth(markPaidMonth);
 
     if (existing) {
       const { error } = await supabase
         .from('fee_records')
-        .update({ status: 'paid', paid_date: paidDate, payment_method: paymentMethod })
+        .update({ status: 'paid', paid_date: paidDate, payment_method: paymentMethod, amount: amt })
         .eq('id', existing.id);
       if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
     } else {
       const { error } = await supabase
         .from('fee_records')
-        .insert({ student_id: studentId, month: markPaidMonth, year, amount: monthlyFee, status: 'paid', paid_date: paidDate, payment_method: paymentMethod });
+        .insert({ student_id: studentId, month: markPaidMonth, year, amount: amt, status: 'paid', paid_date: paidDate, payment_method: paymentMethod });
       if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
     }
 
-    toast({ title: 'Fee marked as paid', description: `${MONTHS[markPaidMonth - 1]} ${year}` });
+    toast({ title: 'Fee marked as paid', description: `${MONTHS[markPaidMonth - 1]} ${year} – ₹${amt.toLocaleString('en-IN')}` });
     setMarkPaidMonth(null);
     fetchFees();
   };
@@ -149,7 +155,11 @@ const FeeTracker = ({ studentId, studentName, monthlyFee, year, onBack }: FeeTra
                           <Undo2 className="w-3 h-3 mr-1" /> Revert
                         </Button>
                       ) : (
-                        <Button size="sm" variant="outline" onClick={() => { setMarkPaidMonth(idx + 1); setPaidDate(new Date().toISOString().split('T')[0]); }}>
+                        <Button size="sm" variant="outline" onClick={() => {
+                          setMarkPaidMonth(idx + 1);
+                          setPaidDate(new Date().toISOString().split('T')[0]);
+                          setAmountPaid(String(fee?.amount ?? monthlyFee));
+                        }}>
                           <Check className="w-3 h-3 mr-1" /> Mark Paid
                         </Button>
                       )}
@@ -184,6 +194,19 @@ const FeeTracker = ({ studentId, studentName, monthlyFee, year, onBack }: FeeTra
                   <SelectItem value="online">Online</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Amount Paid (₹) *</Label>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min="1"
+                step="1"
+                value={amountPaid}
+                onChange={e => setAmountPaid(e.target.value)}
+                placeholder={String(monthlyFee)}
+              />
+              <p className="text-xs text-muted-foreground">Default: ₹{monthlyFee.toLocaleString('en-IN')} • Edit for partial payments</p>
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setMarkPaidMonth(null)}>Cancel</Button>

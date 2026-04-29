@@ -72,14 +72,20 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialData, defaultStudentType]);
 
+  const sanitizeMobile = (v: string) => v.replace(/\D/g, '').slice(0, 10);
+
   const handleChange = (field: keyof StudentFormData, value: string | number) => {
     setForm(prev => {
-      const next = { ...prev, [field]: value } as StudentFormData;
+      let v = value;
+      if ((field === 'student_mobile' || field === 'parent_mobile') && typeof v === 'string') {
+        v = sanitizeMobile(v);
+      }
+      const next = { ...prev, [field]: v } as StudentFormData;
       // Auto-sync student type when summer-camp package is selected
       if (field === 'package_id') {
-        if (value === 'summer-camp') {
+        if (v === 'summer-camp') {
           next.student_type = 'summer_camp';
-        } else if (prev.package_id === 'summer-camp' && value !== 'summer-camp') {
+        } else if (prev.package_id === 'summer-camp' && v !== 'summer-camp') {
           next.student_type = 'regular';
         }
       }
@@ -87,14 +93,28 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
     });
   };
 
+  const isValidMobile = (m: string) => /^\d{10}$/.test(m);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.student_name.trim()) {
       toast({ title: 'Validation Error', description: 'Student Name is required', variant: 'destructive' });
       return;
     }
+    if (!form.parent_name.trim()) {
+      toast({ title: 'Validation Error', description: 'Parent Name is required', variant: 'destructive' });
+      return;
+    }
     if (!form.parent_mobile.trim()) {
       toast({ title: 'Validation Error', description: 'Parent Mobile is required', variant: 'destructive' });
+      return;
+    }
+    if (!isValidMobile(form.parent_mobile.trim())) {
+      toast({ title: 'Validation Error', description: 'Enter valid 10-digit mobile number', variant: 'destructive' });
+      return;
+    }
+    if (form.student_mobile.trim() && !isValidMobile(form.student_mobile.trim())) {
+      toast({ title: 'Validation Error', description: 'Enter valid 10-digit mobile number', variant: 'destructive' });
       return;
     }
     if (!form.class) {
@@ -142,16 +162,35 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
               <Input value={form.student_name} onChange={e => handleChange('student_name', e.target.value)} placeholder="Enter student name" />
             </div>
             <div className="space-y-1.5">
-              <Label>Parent Name</Label>
+              <Label>Parent Name *</Label>
               <Input value={form.parent_name} onChange={e => handleChange('parent_name', e.target.value)} placeholder="Enter parent name" />
             </div>
             <div className="space-y-1.5">
               <Label>Student Mobile</Label>
-              <Input value={form.student_mobile} onChange={e => handleChange('student_mobile', e.target.value)} placeholder="Student mobile" />
+              <Input
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]{10}"
+                maxLength={10}
+                value={form.student_mobile}
+                onChange={e => handleChange('student_mobile', e.target.value)}
+                placeholder="10-digit mobile"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Parent Mobile *</Label>
-              <Input value={form.parent_mobile} onChange={e => handleChange('parent_mobile', e.target.value)} placeholder="Parent mobile" />
+              <Input
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]{10}"
+                maxLength={10}
+                value={form.parent_mobile}
+                onChange={e => handleChange('parent_mobile', e.target.value)}
+                placeholder="10-digit mobile"
+              />
+              {form.parent_mobile && !/^\d{10}$/.test(form.parent_mobile) && (
+                <p className="text-xs text-destructive">Enter valid 10-digit mobile number</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Student Email</Label>

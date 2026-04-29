@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { Download, Share2, FileText, AlertCircle } from 'lucide-react';
 import { generateReceiptPdf, ReceiptData } from '@/lib/pdf-generators';
+import LoaderOverlay from '@/components/admin/LoaderOverlay';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -217,6 +218,7 @@ const ReceiptGenerator = () => {
 
   return (
     <div className="space-y-5">
+      <LoaderOverlay open={generating} message="Generating document..." />
       <div className="bg-card border border-border rounded-xl p-4 sm:p-6 space-y-4">
         <h2 className="text-lg font-semibold flex items-center gap-2"><FileText className="w-5 h-5" /> Generate Fee Receipt</h2>
 

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { Download, Award, Share2 } from 'lucide-react';
 import { generateCertificatePdf } from '@/lib/pdf-generators';
+import LoaderOverlay from '@/components/admin/LoaderOverlay';
 
 interface Student {
   id: string;
@@ -95,6 +96,7 @@ const CertificateGenerator = () => {
 
   return (
     <div className="space-y-5">
+      <LoaderOverlay open={generating} message="Generating document..." />
       <div className="bg-card border border-border rounded-xl p-4 sm:p-6 space-y-4">
         <h2 className="text-lg font-semibold flex items-center gap-2"><Award className="w-5 h-5" /> Generate Summer Camp Certificate</h2>
 
