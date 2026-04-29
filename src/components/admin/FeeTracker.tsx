@@ -155,7 +155,11 @@ const FeeTracker = ({ studentId, studentName, monthlyFee, year, onBack }: FeeTra
                           <Undo2 className="w-3 h-3 mr-1" /> Revert
                         </Button>
                       ) : (
-                        <Button size="sm" variant="outline" onClick={() => { setMarkPaidMonth(idx + 1); setPaidDate(new Date().toISOString().split('T')[0]); }}>
+                        <Button size="sm" variant="outline" onClick={() => {
+                          setMarkPaidMonth(idx + 1);
+                          setPaidDate(new Date().toISOString().split('T')[0]);
+                          setAmountPaid(String(fee?.amount ?? monthlyFee));
+                        }}>
                           <Check className="w-3 h-3 mr-1" /> Mark Paid
                         </Button>
                       )}
@@ -190,6 +194,19 @@ const FeeTracker = ({ studentId, studentName, monthlyFee, year, onBack }: FeeTra
                   <SelectItem value="online">Online</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Amount Paid (₹) *</Label>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min="1"
+                step="1"
+                value={amountPaid}
+                onChange={e => setAmountPaid(e.target.value)}
+                placeholder={String(monthlyFee)}
+              />
+              <p className="text-xs text-muted-foreground">Default: ₹{monthlyFee.toLocaleString('en-IN')} • Edit for partial payments</p>
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setMarkPaidMonth(null)}>Cancel</Button>
