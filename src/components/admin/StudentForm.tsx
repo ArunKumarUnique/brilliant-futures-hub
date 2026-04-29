@@ -162,16 +162,35 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
               <Input value={form.student_name} onChange={e => handleChange('student_name', e.target.value)} placeholder="Enter student name" />
             </div>
             <div className="space-y-1.5">
-              <Label>Parent Name</Label>
+              <Label>Parent Name *</Label>
               <Input value={form.parent_name} onChange={e => handleChange('parent_name', e.target.value)} placeholder="Enter parent name" />
             </div>
             <div className="space-y-1.5">
               <Label>Student Mobile</Label>
-              <Input value={form.student_mobile} onChange={e => handleChange('student_mobile', e.target.value)} placeholder="Student mobile" />
+              <Input
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]{10}"
+                maxLength={10}
+                value={form.student_mobile}
+                onChange={e => handleChange('student_mobile', e.target.value)}
+                placeholder="10-digit mobile"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Parent Mobile *</Label>
-              <Input value={form.parent_mobile} onChange={e => handleChange('parent_mobile', e.target.value)} placeholder="Parent mobile" />
+              <Input
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]{10}"
+                maxLength={10}
+                value={form.parent_mobile}
+                onChange={e => handleChange('parent_mobile', e.target.value)}
+                placeholder="10-digit mobile"
+              />
+              {form.parent_mobile && !/^\d{10}$/.test(form.parent_mobile) && (
+                <p className="text-xs text-destructive">Enter valid 10-digit mobile number</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Student Email</Label>
