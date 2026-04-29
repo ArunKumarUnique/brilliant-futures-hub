@@ -215,9 +215,11 @@ const ReceiptGenerator = () => {
         <div className="space-y-1.5">
           <Label>Student *</Label>
           <Select value={studentId} onValueChange={setStudentId}>
-            <SelectTrigger><SelectValue placeholder="Select student" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={packageId ? 'Select student' : 'Pick a package first'} /></SelectTrigger>
             <SelectContent>
-              {students.map(s => (
+              {filteredStudents.length === 0 ? (
+                <div className="px-3 py-2 text-sm text-muted-foreground">No matching students</div>
+              ) : filteredStudents.map(s => (
                 <SelectItem key={s.id} value={s.id}>{s.student_name} – {s.class}</SelectItem>
               ))}
             </SelectContent>
