@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { Download, Share2, FileText, AlertCircle } from 'lucide-react';
 import { generateReceiptPdf, ReceiptData } from '@/lib/pdf-generators';
+import LoaderOverlay from '@/components/admin/LoaderOverlay';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { Download, Award, Share2 } from 'lucide-react';
 import { generateCertificatePdf } from '@/lib/pdf-generators';
+import LoaderOverlay from '@/components/admin/LoaderOverlay';
 
 interface Student {
   id: string;
