@@ -20,6 +20,7 @@ interface Student {
   class: string;
   package_id: string;
   monthly_fee: number;
+  student_type: 'regular' | 'summer_camp';
 }
 
 const generateReceiptNo = (tenantId: string) => {
@@ -49,11 +50,11 @@ const ReceiptGenerator = () => {
     const load = async () => {
       const { data } = await supabase
         .from('students')
-        .select('id, student_name, parent_name, parent_mobile, class, package_id, monthly_fee')
+        .select('id, student_name, parent_name, parent_mobile, class, package_id, monthly_fee, student_type')
         .eq('tenant_id', tenantId)
         .eq('status', 'active')
         .order('student_name');
-      setStudents(data || []);
+      setStudents((data || []) as Student[]);
     };
     load();
   }, [tenantId]);
@@ -61,6 +62,21 @@ const ReceiptGenerator = () => {
   const selectedStudent = useMemo(() => students.find(s => s.id === studentId), [students, studentId]);
   const selectedPackage = useMemo(() => packages.find(p => p.id === packageId), [packages, packageId]);
   const isSummerCamp = packageId === 'summer-camp';
+
+  // Filter students by selected package type so the wrong cohort never appears
+  const filteredStudents = useMemo(() => {
+    if (!packageId) return students;
+    if (isSummerCamp) return students.filter(s => s.student_type === 'summer_camp');
+    return students.filter(s => (s.student_type || 'regular') === 'regular');
+  }, [students, packageId, isSummerCamp]);
+
+  // Reset student selection when package changes if it no longer matches the cohort
+  useEffect(() => {
+    if (!studentId || !packageId) return;
+    if (!filteredStudents.some(s => s.id === studentId)) {
+      setStudentId('');
+    }
+  }, [packageId, filteredStudents, studentId]);
 
   // Verify payment when key fields change
   useEffect(() => {
@@ -207,9 +223,11 @@ const ReceiptGenerator = () => {
         <div className="space-y-1.5">
           <Label>Student *</Label>
           <Select value={studentId} onValueChange={setStudentId}>
-            <SelectTrigger><SelectValue placeholder="Select student" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={packageId ? 'Select student' : 'Pick a package first'} /></SelectTrigger>
             <SelectContent>
-              {students.map(s => (
+              {filteredStudents.length === 0 ? (
+                <div className="px-3 py-2 text-sm text-muted-foreground">No matching students</div>
+              ) : filteredStudents.map(s => (
                 <SelectItem key={s.id} value={s.id}>{s.student_name} – {s.class}</SelectItem>
               ))}
             </SelectContent>
