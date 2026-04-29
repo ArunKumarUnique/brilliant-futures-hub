@@ -14,7 +14,7 @@ export interface ReceiptData {
   amount: number;
   paidDate: string; // YYYY-MM-DD
   paymentMethod?: string;
-  monthLabel?: string; // e.g. "March 2026" or undefined for summer camp
+  monthLabel?: string;
   isSummerCamp?: boolean;
 }
 
@@ -27,101 +27,183 @@ const tryLoadImage = (url: string): Promise<HTMLImageElement | null> =>
     img.src = url;
   });
 
+// Brand palette — minimal, premium
+const BRAND = {
+  primary: [37, 99, 235] as [number, number, number],   // blue
+  ink: [17, 24, 39] as [number, number, number],
+  muted: [107, 114, 128] as [number, number, number],
+  line: [229, 231, 235] as [number, number, number],
+  paid: [34, 197, 94] as [number, number, number],
+  gold: [184, 134, 11] as [number, number, number],
+  cream: [253, 250, 244] as [number, number, number],
+};
+
+// Draw a faint centered watermark logo
+function drawWatermark(doc: jsPDF, img: HTMLImageElement | null, size = 320) {
+  if (!img) return;
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const x = (pageW - size) / 2;
+  const y = (pageH - size) / 2;
+  // jsPDF supports GState for opacity
+  // @ts-ignore
+  const GState = (doc as any).GState;
+  if (GState) {
+    // @ts-ignore
+    doc.setGState(new GState({ opacity: 0.06 }));
+    try { doc.addImage(img, 'PNG', x, y, size, size); } catch {}
+    // @ts-ignore
+    doc.setGState(new GState({ opacity: 1 }));
+  } else {
+    try { doc.addImage(img, 'PNG', x, y, size, size); } catch {}
+  }
+}
+
 export async function generateReceiptPdf(data: ReceiptData): Promise<jsPDF> {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
-  const margin = 40;
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 48;
 
-  // Header band
-  doc.setFillColor(37, 99, 235); // primary blue
-  doc.rect(0, 0, pageW, 90, 'F');
+  // Soft white background (default). Add subtle top accent bar (thin) for branding.
+  doc.setFillColor(...BRAND.primary);
+  doc.rect(0, 0, pageW, 6, 'F');
 
-  // Logo
-  if (data.logoUrl) {
-    const img = await tryLoadImage(data.logoUrl);
-    if (img) {
-      try { doc.addImage(img, 'PNG', margin, 18, 54, 54); } catch {}
-    }
+  // Watermark
+  const logoImg = data.logoUrl ? await tryLoadImage(data.logoUrl) : null;
+  drawWatermark(doc, logoImg, 320);
+
+  // Header — logo aligned left, institute info beside it
+  let headerY = margin;
+  if (logoImg) {
+    // Maintain aspect ratio, max 56pt on the longest side
+    const maxSide = 56;
+    const ratio = logoImg.width / logoImg.height;
+    const w = ratio >= 1 ? maxSide : maxSide * ratio;
+    const h = ratio >= 1 ? maxSide / ratio : maxSide;
+    try { doc.addImage(logoImg, 'PNG', margin, headerY, w, h); } catch {}
   }
 
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(20);
-  doc.text(data.instituteName, margin + 70, 42);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.text(data.instituteAddress, margin + 70, 58, { maxWidth: pageW - margin - 90 });
-  doc.text(`Phone: ${data.institutePhone}  |  Email: ${data.instituteEmail}`, margin + 70, 78);
-
-  // Title
-  doc.setTextColor(17, 24, 39);
+  doc.setTextColor(...BRAND.ink);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
-  doc.text('FEE RECEIPT', pageW / 2, 130, { align: 'center' });
+  doc.text(data.instituteName, margin + 70, headerY + 18);
 
-  // Receipt info
-  doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Receipt No: ${data.receiptNo}`, margin, 160);
-  doc.text(`Date: ${data.paidDate}`, pageW - margin, 160, { align: 'right' });
+  doc.setFontSize(8.5);
+  doc.setTextColor(...BRAND.muted);
+  doc.text(data.instituteAddress, margin + 70, headerY + 32, { maxWidth: pageW - margin - 90 });
+  doc.text(`${data.institutePhone}  •  ${data.instituteEmail}`, margin + 70, headerY + 46);
 
-  // Student details box
-  let y = 190;
-  doc.setDrawColor(220);
-  doc.setLineWidth(0.5);
-  doc.roundedRect(margin, y, pageW - margin * 2, 100, 6, 6);
+  // Divider
+  doc.setDrawColor(...BRAND.line);
+  doc.setLineWidth(0.6);
+  doc.line(margin, headerY + 66, pageW - margin, headerY + 66);
+
+  // Title row
+  doc.setTextColor(...BRAND.ink);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text('Student Details', margin + 12, y + 22);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.text(`Student Name: ${data.studentName}`, margin + 12, y + 44);
-  doc.text(`Parent Name: ${data.parentName || '—'}`, margin + 12, y + 62);
-  doc.text(`Mobile: ${data.mobile}`, margin + 12, y + 80);
+  doc.setFontSize(14);
+  doc.text('FEE RECEIPT', margin, headerY + 92);
 
-  // Payment details box
-  y += 120;
-  doc.roundedRect(margin, y, pageW - margin * 2, 130, 6, 6);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text('Payment Details', margin + 12, y + 22);
+  // Receipt no + date right-aligned
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(...BRAND.muted);
+  doc.text(`Receipt No`, pageW - margin, headerY + 84, { align: 'right' });
+  doc.setTextColor(...BRAND.ink);
+  doc.setFont('helvetica', 'bold');
+  doc.text(data.receiptNo, pageW - margin, headerY + 98, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...BRAND.muted);
+  doc.text(`Date: ${data.paidDate}`, pageW - margin, headerY + 112, { align: 'right' });
+
+  // Student details section
+  let y = headerY + 138;
+  doc.setTextColor(...BRAND.primary);
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
-  doc.text(`Package: ${data.packageName}`, margin + 12, y + 44);
+  doc.text('STUDENT DETAILS', margin, y);
+  doc.setDrawColor(...BRAND.line);
+  doc.line(margin, y + 4, pageW - margin, y + 4);
+
+  const drawRow = (label: string, value: string, rowY: number) => {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(...BRAND.muted);
+    doc.text(label, margin, rowY);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...BRAND.ink);
+    doc.setFontSize(10.5);
+    doc.text(value, margin + 130, rowY);
+  };
+
+  y += 22;
+  drawRow('Student Name', data.studentName, y);
+  y += 18;
+  drawRow('Parent Name', data.parentName || '—', y);
+  y += 18;
+  drawRow('Mobile', data.mobile, y);
+
+  // Payment details section
+  y += 36;
+  doc.setTextColor(...BRAND.primary);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text('PAYMENT DETAILS', margin, y);
+  doc.setDrawColor(...BRAND.line);
+  doc.line(margin, y + 4, pageW - margin, y + 4);
+
+  y += 22;
+  drawRow('Package', data.packageName, y);
+  y += 18;
   if (data.monthLabel) {
-    doc.text(`Month: ${data.monthLabel}`, margin + 12, y + 62);
+    drawRow('Month', data.monthLabel, y);
   } else if (data.isSummerCamp) {
-    doc.text(`Type: One-time (Summer Camp)`, margin + 12, y + 62);
+    drawRow('Type', 'One-time (Summer Camp)', y);
+  } else {
+    drawRow('Type', 'One-time', y);
   }
-  doc.text(`Payment Method: ${(data.paymentMethod || 'cash').toUpperCase()}`, margin + 12, y + 80);
+  y += 18;
+  drawRow('Payment Method', (data.paymentMethod || 'cash').toUpperCase(), y);
 
+  // Amount paid — highlighted box
+  y += 32;
+  doc.setFillColor(245, 247, 251);
+  doc.setDrawColor(...BRAND.line);
+  doc.roundedRect(margin, y, pageW - margin * 2, 56, 6, 6, 'FD');
+  doc.setTextColor(...BRAND.muted);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text('Amount Paid', margin + 16, y + 22);
+  doc.setTextColor(...BRAND.ink);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.text(`Amount Paid: ₹${data.amount.toLocaleString('en-IN')}`, margin + 12, y + 108);
+  doc.setFontSize(20);
+  doc.text(`Rs. ${data.amount.toLocaleString('en-IN')}`, margin + 16, y + 44);
 
-  // PAID stamp
-  doc.saveGraphicsState();
-  doc.setTextColor(34, 197, 94);
-  doc.setDrawColor(34, 197, 94);
-  doc.setLineWidth(2);
-  const stampX = pageW - margin - 110;
-  const stampY = y + 50;
-  doc.roundedRect(stampX, stampY, 100, 50, 6, 6, 'S');
+  // Minimal PAID stamp on the right of the amount box
+  const stampX = pageW - margin - 96;
+  const stampY = y + 12;
+  doc.setDrawColor(...BRAND.paid);
+  doc.setLineWidth(1.4);
+  doc.roundedRect(stampX, stampY, 80, 32, 4, 4, 'S');
+  doc.setTextColor(...BRAND.paid);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(22);
-  doc.text('PAID', stampX + 50, stampY + 33, { align: 'center' });
-  doc.restoreGraphicsState();
+  doc.setFontSize(14);
+  doc.text('PAID', stampX + 40, stampY + 21, { align: 'center' });
 
   // Footer
-  doc.setTextColor(107, 114, 128);
+  doc.setTextColor(...BRAND.muted);
   doc.setFont('helvetica', 'italic');
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.text(
     'This is a system-generated receipt. Thank you for your payment.',
     pageW / 2,
-    doc.internal.pageSize.getHeight() - 40,
+    pageH - 36,
     { align: 'center' },
   );
+  doc.setFont('helvetica', 'normal');
+  doc.text(data.instituteName, pageW / 2, pageH - 22, { align: 'center' });
 
   return doc;
 }
@@ -140,127 +222,112 @@ export async function generateCertificatePdf(data: CertificateData): Promise<jsP
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
 
-  // Cream background
-  doc.setFillColor(253, 250, 240);
+  // Off-white background
+  doc.setFillColor(...BRAND.cream);
   doc.rect(0, 0, pageW, pageH, 'F');
 
-  // Outer gold border
-  doc.setDrawColor(184, 134, 11);
-  doc.setLineWidth(6);
-  doc.rect(20, 20, pageW - 40, pageH - 40);
+  // Watermark (centered, very faint)
+  const logoImg = data.logoUrl ? await tryLoadImage(data.logoUrl) : null;
+  drawWatermark(doc, logoImg, 360);
 
-  // Inner thin border
-  doc.setLineWidth(1);
-  doc.rect(34, 34, pageW - 68, pageH - 68);
+  // Outer thin gold border
+  doc.setDrawColor(...BRAND.gold);
+  doc.setLineWidth(3);
+  doc.rect(24, 24, pageW - 48, pageH - 48);
 
-  // Top corner ribbons (decorative diamonds)
-  doc.setFillColor(184, 134, 11);
-  [[44, 44], [pageW - 56, 44], [44, pageH - 56], [pageW - 56, pageH - 56]].forEach(([x, y]) => {
-    doc.triangle(x, y, x + 12, y, x, y + 12, 'F');
-  });
+  // Inner hairline border
+  doc.setLineWidth(0.6);
+  doc.rect(36, 36, pageW - 72, pageH - 72);
 
-  // Logo
-  if (data.logoUrl) {
-    const img = await tryLoadImage(data.logoUrl);
-    if (img) {
-      try { doc.addImage(img, 'PNG', pageW / 2 - 30, 60, 60, 60); } catch {}
-    }
+  // Small logo at top center
+  if (logoImg) {
+    const maxSide = 54;
+    const ratio = logoImg.width / logoImg.height;
+    const w = ratio >= 1 ? maxSide : maxSide * ratio;
+    const h = ratio >= 1 ? maxSide / ratio : maxSide;
+    try { doc.addImage(logoImg, 'PNG', (pageW - w) / 2, 56, w, h); } catch {}
   }
 
   // Institute name
-  doc.setTextColor(17, 24, 39);
+  doc.setTextColor(...BRAND.ink);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.text(data.instituteName, pageW / 2, 140, { align: 'center' });
+  doc.setFontSize(13);
+  doc.text(data.instituteName, pageW / 2, 132, { align: 'center' });
 
-  // Big heading
-  doc.setTextColor(184, 134, 11);
+  // Heading — prominent
+  doc.setTextColor(...BRAND.gold);
   doc.setFont('times', 'bolditalic');
-  doc.setFontSize(40);
+  doc.setFontSize(46);
   doc.text('Certificate of Completion', pageW / 2, 200, { align: 'center' });
 
-  // Decorative line
-  doc.setDrawColor(184, 134, 11);
+  // Decorative double line
+  doc.setDrawColor(...BRAND.gold);
   doc.setLineWidth(1.2);
-  doc.line(pageW / 2 - 130, 215, pageW / 2 + 130, 215);
+  doc.line(pageW / 2 - 150, 218, pageW / 2 + 150, 218);
+  doc.setLineWidth(0.4);
+  doc.line(pageW / 2 - 130, 224, pageW / 2 + 130, 224);
 
   // Body
-  doc.setTextColor(75, 85, 99);
+  doc.setTextColor(...BRAND.muted);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(13);
-  doc.text('This is to certify that', pageW / 2, 260, { align: 'center' });
+  doc.text('This certificate is proudly presented to', pageW / 2, 268, { align: 'center' });
 
   // Student name
-  doc.setTextColor(17, 24, 39);
+  doc.setTextColor(...BRAND.ink);
   doc.setFont('times', 'bold');
-  doc.setFontSize(32);
-  doc.text(data.studentName, pageW / 2, 305, { align: 'center' });
+  doc.setFontSize(34);
+  doc.text(data.studentName, pageW / 2, 318, { align: 'center' });
 
   // Underline under name
   const nameWidth = doc.getTextWidth(data.studentName);
-  doc.setDrawColor(184, 134, 11);
+  doc.setDrawColor(...BRAND.gold);
   doc.setLineWidth(0.8);
-  doc.line(pageW / 2 - nameWidth / 2 - 20, 315, pageW / 2 + nameWidth / 2 + 20, 315);
+  doc.line(pageW / 2 - nameWidth / 2 - 24, 328, pageW / 2 + nameWidth / 2 + 24, 328);
 
   // Description
-  doc.setTextColor(75, 85, 99);
+  doc.setTextColor(...BRAND.muted);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(13);
+  doc.setFontSize(12.5);
   doc.text(
-    `has successfully completed the Summer Camp Program at ${data.instituteName}.`,
+    `for successfully completing the Summer Camp Program at ${data.instituteName}.`,
     pageW / 2,
-    350,
-    { align: 'center', maxWidth: pageW - 160 },
+    362,
+    { align: 'center', maxWidth: pageW - 180 },
   );
   doc.setFontSize(11);
   doc.text(
-    'We appreciate the dedication, enthusiasm, and creativity shown throughout the program.',
+    'In recognition of dedication, enthusiasm, and creative spirit shown throughout the program.',
     pageW / 2,
-    372,
-    { align: 'center', maxWidth: pageW - 160 },
+    384,
+    { align: 'center', maxWidth: pageW - 180 },
   );
 
-  // Gold badge (bottom-left)
-  const badgeX = 130;
-  const badgeY = pageH - 130;
-  doc.setFillColor(184, 134, 11);
-  doc.circle(badgeX, badgeY, 32, 'F');
-  doc.setFillColor(253, 250, 240);
-  doc.circle(badgeX, badgeY, 24, 'F');
-  doc.setTextColor(184, 134, 11);
+  // Date and Signature blocks
+  doc.setTextColor(...BRAND.ink);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.text('SUMMER', badgeX, badgeY - 4, { align: 'center' });
-  doc.text('CAMP', badgeX, badgeY + 8, { align: 'center' });
-  // ribbon tails
-  doc.setFillColor(184, 134, 11);
-  doc.triangle(badgeX - 14, badgeY + 28, badgeX - 4, badgeY + 28, badgeX - 14, badgeY + 50, 'F');
-  doc.triangle(badgeX + 14, badgeY + 28, badgeX + 4, badgeY + 28, badgeX + 14, badgeY + 50, 'F');
-
-  // Date and Signature
-  doc.setTextColor(17, 24, 39);
-  doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
 
-  // Date
-  doc.text('Date', 260, pageH - 90);
+  // Date (left)
+  doc.text(data.date, 240, pageH - 90);
+  doc.setDrawColor(160);
   doc.setLineWidth(0.6);
-  doc.setDrawColor(120);
-  doc.line(260, pageH - 80, 380, pageH - 80);
-  doc.setFont('helvetica', 'bold');
-  doc.text(data.date, 260, pageH - 65);
-
-  // Signature
+  doc.line(220, pageH - 80, 380, pageH - 80);
   doc.setFont('helvetica', 'normal');
-  doc.text('Signature', pageW - 280, pageH - 90);
-  doc.line(pageW - 280, pageH - 80, pageW - 160, pageH - 80);
+  doc.setFontSize(9.5);
+  doc.setTextColor(...BRAND.muted);
+  doc.text('Date', 300, pageH - 66, { align: 'center' });
+
+  // Signature (right)
   doc.setFont('helvetica', 'bold');
-  doc.text(data.signatoryName || 'Authorized Signatory', pageW - 280, pageH - 65);
-  if (data.signatoryRole) {
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(9);
-    doc.text(data.signatoryRole, pageW - 280, pageH - 52);
-  }
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.ink);
+  doc.text(data.signatoryName || 'Authorized Signatory', pageW - 300, pageH - 90, { align: 'center' });
+  doc.line(pageW - 380, pageH - 80, pageW - 220, pageH - 80);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(...BRAND.muted);
+  doc.text(data.signatoryRole || 'Director', pageW - 300, pageH - 66, { align: 'center' });
 
   return doc;
 }
