@@ -73,7 +73,18 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
   }, [open, initialData, defaultStudentType]);
 
   const handleChange = (field: keyof StudentFormData, value: string | number) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+    setForm(prev => {
+      const next = { ...prev, [field]: value } as StudentFormData;
+      // Auto-sync student type when summer-camp package is selected
+      if (field === 'package_id') {
+        if (value === 'summer-camp') {
+          next.student_type = 'summer_camp';
+        } else if (prev.package_id === 'summer-camp' && value !== 'summer-camp') {
+          next.student_type = 'regular';
+        }
+      }
+      return next;
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
