@@ -218,6 +218,7 @@ const ReceiptGenerator = () => {
 
   return (
     <div className="space-y-5">
+      <LoaderOverlay open={generating} message="Generating document..." />
       <div className="bg-card border border-border rounded-xl p-4 sm:p-6 space-y-4">
         <h2 className="text-lg font-semibold flex items-center gap-2"><FileText className="w-5 h-5" /> Generate Fee Receipt</h2>
 
