@@ -36,6 +36,7 @@ const CertificateGenerator = () => {
         .select('id, student_name, parent_mobile, class')
         .eq('tenant_id', tenantId)
         .eq('status', 'active')
+        .eq('student_type', 'summer_camp')
         .order('student_name');
       setStudents(data || []);
     };
