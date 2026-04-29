@@ -20,6 +20,7 @@ interface Student {
   class: string;
   package_id: string;
   monthly_fee: number;
+  student_type: 'regular' | 'summer_camp';
 }
 
 const generateReceiptNo = (tenantId: string) => {
@@ -49,11 +50,11 @@ const ReceiptGenerator = () => {
     const load = async () => {
       const { data } = await supabase
         .from('students')
-        .select('id, student_name, parent_name, parent_mobile, class, package_id, monthly_fee')
+        .select('id, student_name, parent_name, parent_mobile, class, package_id, monthly_fee, student_type')
         .eq('tenant_id', tenantId)
         .eq('status', 'active')
         .order('student_name');
-      setStudents(data || []);
+      setStudents((data || []) as Student[]);
     };
     load();
   }, [tenantId]);
@@ -61,6 +62,13 @@ const ReceiptGenerator = () => {
   const selectedStudent = useMemo(() => students.find(s => s.id === studentId), [students, studentId]);
   const selectedPackage = useMemo(() => packages.find(p => p.id === packageId), [packages, packageId]);
   const isSummerCamp = packageId === 'summer-camp';
+
+  // Filter students by selected package type so the wrong cohort never appears
+  const filteredStudents = useMemo(() => {
+    if (!packageId) return students;
+    if (isSummerCamp) return students.filter(s => s.student_type === 'summer_camp');
+    return students.filter(s => (s.student_type || 'regular') === 'regular');
+  }, [students, packageId, isSummerCamp]);
 
   // Verify payment when key fields change
   useEffect(() => {
