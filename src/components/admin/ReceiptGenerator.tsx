@@ -70,6 +70,14 @@ const ReceiptGenerator = () => {
     return students.filter(s => (s.student_type || 'regular') === 'regular');
   }, [students, packageId, isSummerCamp]);
 
+  // Reset student selection when package changes if it no longer matches the cohort
+  useEffect(() => {
+    if (!studentId || !packageId) return;
+    if (!filteredStudents.some(s => s.id === studentId)) {
+      setStudentId('');
+    }
+  }, [packageId, filteredStudents, studentId]);
+
   // Verify payment when key fields change
   useEffect(() => {
     const verify = async () => {
