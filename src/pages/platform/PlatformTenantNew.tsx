@@ -121,7 +121,7 @@ const PlatformTenantNew = () => {
           <div className="bg-muted rounded p-4 space-y-2 text-sm">
             <div><span className="text-muted-foreground">Tenant:</span> <span className="font-medium">{created.tenantName}</span></div>
             <div><span className="text-muted-foreground">Email:</span> <span className="font-medium break-all">{created.email}</span></div>
-            <div><span className="text-muted-foreground">Password:</span> <span className="font-mono font-medium">{created.password}</span></div>
+            <div><span className="text-muted-foreground">Default Password:</span> <span className="font-mono font-medium">{created.password}</span></div>
           </div>
           <p className="text-xs text-muted-foreground">Share these credentials securely. The tenant admin should change the password on first login.</p>
           <div className="flex flex-col sm:flex-row gap-2">
