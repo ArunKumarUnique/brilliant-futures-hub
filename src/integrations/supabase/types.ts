@@ -241,6 +241,39 @@ export type Database = {
           },
         ]
       }
+      platform_admins: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          mobile: string
+          password: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          mobile: string
+          password: string
+          role?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          mobile?: string
+          password?: string
+          role?: string
+        }
+        Relationships: []
+      }
       students: {
         Row: {
           admission_date: string | null
@@ -337,6 +370,95 @@ export type Database = {
           student_id?: string
           tenant_id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      tenant_admin_credentials: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          must_change_password: boolean
+          temp_password: string
+          tenant_registry_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          must_change_password?: boolean
+          temp_password: string
+          tenant_registry_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          must_change_password?: boolean
+          temp_password?: string
+          tenant_registry_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_admin_credentials_tenant_registry_id_fkey"
+            columns: ["tenant_registry_id"]
+            isOneToOne: false
+            referencedRelation: "tenants_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants_registry: {
+        Row: {
+          address: string
+          city: string
+          created_at: string
+          email: string
+          id: string
+          institute_name: string
+          institute_type: string | null
+          logo_url: string | null
+          mobile: string
+          owner_first_name: string
+          owner_last_name: string
+          pincode: string
+          state: string
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          address: string
+          city: string
+          created_at?: string
+          email: string
+          id?: string
+          institute_name: string
+          institute_type?: string | null
+          logo_url?: string | null
+          mobile: string
+          owner_first_name: string
+          owner_last_name: string
+          pincode: string
+          state: string
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          created_at?: string
+          email?: string
+          id?: string
+          institute_name?: string
+          institute_type?: string | null
+          logo_url?: string | null
+          mobile?: string
+          owner_first_name?: string
+          owner_last_name?: string
+          pincode?: string
+          state?: string
+          status?: string
+          tenant_id?: string
         }
         Relationships: []
       }
