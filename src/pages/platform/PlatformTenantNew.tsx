@@ -13,12 +13,7 @@ import { Link } from 'react-router-dom';
 const slugify = (s: string) =>
   s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 40) || 'tenant';
 
-const genPassword = () => {
-  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-  let out = '';
-  for (let i = 0; i < 10; i++) out += chars[Math.floor(Math.random() * chars.length)];
-  return out + '@1';
-};
+const DEFAULT_PASSWORD = 'Tutorials@1234';
 
 const sanitizeMobile = (v: string) => v.replace(/\D/g, '').slice(0, 10);
 const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
