@@ -90,7 +90,7 @@ const PlatformTenantNew = () => {
       return;
     }
 
-    const tempPassword = genPassword();
+    const tempPassword = DEFAULT_PASSWORD;
     const { error: credErr } = await supabase.from('tenant_admin_credentials').insert({
       tenant_registry_id: inserted.id,
       email,
