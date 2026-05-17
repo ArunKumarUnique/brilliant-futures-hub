@@ -122,6 +122,9 @@ const SummerCampFees = () => {
   };
 
   const upsertPayment = async (row: Row, status: 'paid' | 'pending', amount: number) => {
+    if (!tenantId) {
+      return { message: 'Tenant missing. Please log in again.' } as any;
+    }
     const payload: any = {
       tenant_id: tenantId,
       student_id: row.student_id,
@@ -157,7 +160,7 @@ const SummerCampFees = () => {
   };
 
   const handleBulkPaid = async () => {
-    if (pendingSelected.length === 0) return;
+    if (pendingSelected.length === 0 || !tenantId) return;
     const inserts = pendingSelected
       .filter(r => !r.payment_id)
       .map(r => ({
