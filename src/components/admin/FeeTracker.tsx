@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAdmin } from '@/contexts/AdminContext';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +34,7 @@ interface FeeTrackerProps {
 }
 
 const FeeTracker = ({ studentId, studentName, monthlyFee, year, onBack }: FeeTrackerProps) => {
+  const { tenantId } = useAdmin();
   const [fees, setFees] = useState<FeeRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [markPaidMonth, setMarkPaidMonth] = useState<number | null>(null);
@@ -42,9 +44,16 @@ const FeeTracker = ({ studentId, studentName, monthlyFee, year, onBack }: FeeTra
   const [amountPaid, setAmountPaid] = useState<string>(String(monthlyFee));
 
   const fetchFees = async () => {
+    if (!tenantId) {
+      toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
+      setFees([]);
+      setLoading(false);
+      return;
+    }
     const { data, error } = await supabase
       .from('fee_records')
       .select('*')
+      .eq('tenant_id', tenantId)
       .eq('student_id', studentId)
       .eq('year', year)
       .order('month');
@@ -56,12 +65,12 @@ const FeeTracker = ({ studentId, studentName, monthlyFee, year, onBack }: FeeTra
     setLoading(false);
   };
 
-  useEffect(() => { fetchFees(); }, [studentId, year]);
+  useEffect(() => { fetchFees(); }, [studentId, year, tenantId]);
 
   const getFeeForMonth = (month: number) => fees.find(f => f.month === month);
 
   const handleMarkPaid = async () => {
-    if (markPaidMonth === null) return;
+    if (markPaidMonth === null || !tenantId) return;
     const amt = Number(amountPaid);
     if (!amountPaid || isNaN(amt) || amt <= 0) {
       toast({ title: 'Invalid amount', description: 'Amount Paid is required and must be greater than 0', variant: 'destructive' });
@@ -73,12 +82,13 @@ const FeeTracker = ({ studentId, studentName, monthlyFee, year, onBack }: FeeTra
       const { error } = await supabase
         .from('fee_records')
         .update({ status: 'paid', paid_date: paidDate, payment_method: paymentMethod, amount: amt })
-        .eq('id', existing.id);
+        .eq('id', existing.id)
+        .eq('tenant_id', tenantId);
       if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
     } else {
       const { error } = await supabase
         .from('fee_records')
-        .insert({ student_id: studentId, month: markPaidMonth, year, amount: amt, status: 'paid', paid_date: paidDate, payment_method: paymentMethod });
+        .insert({ tenant_id: tenantId, student_id: studentId, month: markPaidMonth, year, amount: amt, status: 'paid', paid_date: paidDate, payment_method: paymentMethod });
       if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
     }
 
@@ -88,14 +98,15 @@ const FeeTracker = ({ studentId, studentName, monthlyFee, year, onBack }: FeeTra
   };
 
   const handleRevert = async () => {
-    if (revertMonth === null) return;
+    if (revertMonth === null || !tenantId) return;
     const existing = getFeeForMonth(revertMonth);
     if (!existing) return;
 
     const { error } = await supabase
       .from('fee_records')
       .update({ status: 'pending', paid_date: null, payment_method: null })
-      .eq('id', existing.id);
+      .eq('id', existing.id)
+      .eq('tenant_id', tenantId);
 
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
