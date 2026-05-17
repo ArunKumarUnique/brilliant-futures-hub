@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { Users, DollarSign, AlertCircle, TrendingUp, Sparkles } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
@@ -8,7 +9,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 
 const AdminDashboard = () => {
   const { config } = useTenant();
-  const tenantId = config.id;
+  const { tenantId } = useAdmin();
 
   const [regularCount, setRegularCount] = useState(0);
   const [summerCount, setSummerCount] = useState(0);
@@ -22,6 +23,12 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const fetchStats = async () => {
+      if (!tenantId) {
+        setRegularCount(0); setSummerCount(0); setFeesCollected(0); setPendingFees(0); setTotalRevenue(0); setSummerCollected(0); setSummerPending(0);
+        setMonthlyData(MONTHS.map(m => ({ month: m, collected: 0 })));
+        setLoading(false);
+        return;
+      }
       const currentMonth = new Date().getMonth() + 1;
       const currentYear = new Date().getFullYear();
 
@@ -43,6 +50,7 @@ const AdminDashboard = () => {
         const { data: paidFees } = await supabase
           .from('fee_records')
           .select('amount')
+          .eq('tenant_id', tenantId)
           .in('student_id', ids)
           .eq('month', currentMonth)
           .eq('year', currentYear)
@@ -57,6 +65,7 @@ const AdminDashboard = () => {
         const { data: yearFees } = await supabase
           .from('fee_records')
           .select('month, amount')
+          .eq('tenant_id', tenantId)
           .in('student_id', ids)
           .eq('year', currentYear)
           .eq('status', 'paid');
@@ -68,6 +77,7 @@ const AdminDashboard = () => {
         const { data: allPaid } = await supabase
           .from('fee_records')
           .select('amount')
+          .eq('tenant_id', tenantId)
           .in('student_id', ids)
           .eq('status', 'paid');
         setTotalRevenue(allPaid?.reduce((sum, f) => sum + Number(f.amount), 0) || 0);

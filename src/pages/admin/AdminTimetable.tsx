@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,7 +22,7 @@ interface Timetable {
 
 const AdminTimetable = () => {
   const { config } = useTenant();
-  const tenantId = config.id;
+  const { tenantId } = useAdmin();
 
   const [timetables, setTimetables] = useState<Timetable[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,6 +37,12 @@ const AdminTimetable = () => {
   const [file, setFile] = useState<File | null>(null);
 
   const fetchTimetables = async () => {
+    if (!tenantId) {
+      toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
+      setTimetables([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const { data } = await supabase
       .from('timetables')
@@ -49,6 +56,10 @@ const AdminTimetable = () => {
   useEffect(() => { fetchTimetables(); }, [tenantId]);
 
   const handleSubmit = async () => {
+    if (!tenantId) {
+      toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
+      return;
+    }
     if (!title.trim()) {
       toast({ title: 'Title is required', variant: 'destructive' });
       return;
@@ -95,12 +106,14 @@ const AdminTimetable = () => {
   };
 
   const toggleActive = async (id: string, current: boolean) => {
-    await supabase.from('timetables').update({ is_active: !current }).eq('id', id);
+    if (!tenantId) return;
+    await supabase.from('timetables').update({ is_active: !current }).eq('id', id).eq('tenant_id', tenantId);
     fetchTimetables();
   };
 
   const deleteTimetable = async (id: string) => {
-    await supabase.from('timetables').delete().eq('id', id);
+    if (!tenantId) return;
+    await supabase.from('timetables').delete().eq('id', id).eq('tenant_id', tenantId);
     toast({ title: 'Timetable deleted' });
     fetchTimetables();
   };

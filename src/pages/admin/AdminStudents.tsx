@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,8 +39,8 @@ const CLASS_OPTIONS = [
 
 const AdminStudents = () => {
   const { config, tr } = useTenant();
+  const { tenantId } = useAdmin();
   const { language } = useLanguage();
-  const tenantId = config.id;
   const packages = config.packages?.items || [];
 
   const [students, setStudents] = useState<Student[]>([]);
@@ -61,6 +62,12 @@ const AdminStudents = () => {
   const [feeStatuses, setFeeStatuses] = useState<Record<string, string>>({});
 
   const fetchStudents = async () => {
+    if (!tenantId) {
+      toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
+      setStudents([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const { data, error } = await supabase
       .from('students')
@@ -77,6 +84,7 @@ const AdminStudents = () => {
         const { data: feeData } = await supabase
           .from('fee_records')
           .select('student_id, status')
+          .eq('tenant_id', tenantId)
           .in('student_id', data.map(s => s.id))
           .eq('month', currentMonth)
           .eq('year', currentYear);
@@ -91,6 +99,10 @@ const AdminStudents = () => {
   useEffect(() => { fetchStudents(); }, [tenantId]);
 
   const handleAdd = async (data: StudentFormData) => {
+    if (!tenantId) {
+      toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
+      return;
+    }
     const { error } = await supabase.from('students').insert({
       tenant_id: tenantId,
       student_name: data.student_name.trim(),
@@ -117,7 +129,7 @@ const AdminStudents = () => {
   };
 
   const handleEdit = async (data: StudentFormData) => {
-    if (!editingStudent) return;
+    if (!editingStudent || !tenantId) return;
     const { error } = await supabase.from('students').update({
       student_name: data.student_name.trim(),
       parent_name: data.parent_name.trim() || null,
@@ -132,7 +144,7 @@ const AdminStudents = () => {
       status: data.status,
       student_type: data.student_type,
       notes: data.notes.trim() || null,
-    } as any).eq('id', editingStudent.id);
+    } as any).eq('id', editingStudent.id).eq('tenant_id', tenantId);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
@@ -143,8 +155,8 @@ const AdminStudents = () => {
   };
 
   const handleDelete = async () => {
-    if (!deleteId) return;
-    const { error } = await supabase.from('students').delete().eq('id', deleteId);
+    if (!deleteId || !tenantId) return;
+    const { error } = await supabase.from('students').delete().eq('id', deleteId).eq('tenant_id', tenantId);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {

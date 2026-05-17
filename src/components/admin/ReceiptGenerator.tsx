@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,8 +34,8 @@ const generateReceiptNo = (tenantId: string) => {
 
 const ReceiptGenerator = () => {
   const { config, tr } = useTenant();
+  const { tenantId } = useAdmin();
   const { language } = useLanguage();
-  const tenantId = config.id;
   const packages = config.packages?.items || [];
 
   const [students, setStudents] = useState<Student[]>([]);
@@ -49,6 +50,10 @@ const ReceiptGenerator = () => {
 
   useEffect(() => {
     const load = async () => {
+      if (!tenantId) {
+        setStudents([]);
+        return;
+      }
       const { data } = await supabase
         .from('students')
         .select('id, student_name, parent_name, parent_mobile, class, package_id, monthly_fee, student_type')
@@ -96,6 +101,7 @@ const ReceiptGenerator = () => {
         const { data } = await supabase
           .from('fee_records')
           .select('status, paid_date, payment_method, amount')
+          .eq('tenant_id', tenantId)
           .eq('student_id', studentId)
           .eq('month', Number(month))
           .eq('year', Number(year))
@@ -111,6 +117,10 @@ const ReceiptGenerator = () => {
   const generate = async () => {
     if (!selectedStudent || !selectedPackage) {
       toast({ title: 'Select student & package', variant: 'destructive' });
+      return;
+    }
+    if (!tenantId) {
+      toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
       return;
     }
     if (paymentStatus !== 'paid') {
@@ -138,7 +148,7 @@ const ReceiptGenerator = () => {
         const { data } = await supabase
           .from('fee_records')
           .select('amount, paid_date, payment_method')
-          .eq('student_id', studentId).eq('month', Number(month)).eq('year', Number(year)).maybeSingle();
+          .eq('tenant_id', tenantId).eq('student_id', studentId).eq('month', Number(month)).eq('year', Number(year)).maybeSingle();
         amount = data?.amount ? Number(data.amount) : selectedStudent.monthly_fee;
         paidDate = data?.paid_date || paidDate;
         paymentMethod = data?.payment_method || paymentMethod;

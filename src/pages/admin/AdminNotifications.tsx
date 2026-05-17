@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -28,7 +29,7 @@ const DEFAULT_TEMPLATE = `Dear Parent, the tuition fee for {student_name} for th
 
 const AdminNotifications = () => {
   const { config } = useTenant();
-  const tenantId = config.id;
+  const { tenantId } = useAdmin();
 
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
@@ -43,6 +44,12 @@ const AdminNotifications = () => {
   const [sendMethod, setSendMethod] = useState<'whatsapp' | 'sms' | 'email'>('whatsapp');
 
   const fetchPendingStudents = async () => {
+    if (!tenantId) {
+      toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
+      setStudents([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const { data: allStudents } = await supabase
       .from('students')
@@ -60,6 +67,7 @@ const AdminNotifications = () => {
     const { data: feeData } = await supabase
       .from('fee_records')
       .select('student_id, status')
+      .eq('tenant_id', tenantId)
       .in('student_id', allStudents.map(s => s.id))
       .eq('month', Number(month))
       .eq('year', Number(year));

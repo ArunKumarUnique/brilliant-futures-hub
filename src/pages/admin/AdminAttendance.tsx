@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -39,7 +40,7 @@ const formatTime12 = (time24: string) => {
 
 const AdminAttendance = () => {
   const { config } = useTenant();
-  const tenantId = config.id;
+  const { tenantId } = useAdmin();
 
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
@@ -57,6 +58,14 @@ const AdminAttendance = () => {
   const [reportCopied, setReportCopied] = useState(false);
 
   const fetchData = async () => {
+    if (!tenantId) {
+      toast.error('Tenant missing. Please log in again.');
+      setStudents([]);
+      setPresentIds(new Set());
+      setArrivalTimes({});
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setSaved(false);
 
@@ -148,6 +157,10 @@ const AdminAttendance = () => {
   }, [tab, students, presentStudents, absentStudents]);
 
   const saveAttendance = async () => {
+    if (!tenantId) {
+      toast.error('Tenant missing. Please log in again.');
+      return;
+    }
     setSaving(true);
     try {
       const studentIds = students.map(s => s.id);

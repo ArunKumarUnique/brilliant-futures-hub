@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,12 @@ import { format, isToday, isTomorrow, startOfDay } from 'date-fns';
 
 const AdminMessageGenerator = () => {
   const { config } = useTenant();
+  const { tenantId } = useAdmin();
   const name = config.instituteName;
+
+  if (!tenantId) {
+    return <div className="text-sm text-destructive">Tenant missing. Please log in again.</div>;
+  }
 
   return (
     <div className="space-y-4">
@@ -34,12 +40,12 @@ const AdminMessageGenerator = () => {
           <TabsTrigger value="learnings" className="text-xs px-1 py-2">Learnings</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="fee"><FeeReminder instituteName={name} tenantId={config.id} /></TabsContent>
+        <TabsContent value="fee"><FeeReminder instituteName={name} tenantId={tenantId} /></TabsContent>
         <TabsContent value="closed"><TuitionClosed instituteName={name} /></TabsContent>
         <TabsContent value="timings"><TimingsUpdate instituteName={name} /></TabsContent>
         <TabsContent value="occasion"><OccasionWishes instituteName={name} /></TabsContent>
-        <TabsContent value="homework"><HomeworkMessage instituteName={name} tenantId={config.id} /></TabsContent>
-        <TabsContent value="learnings"><LearningsMessage instituteName={name} tenantId={config.id} /></TabsContent>
+        <TabsContent value="homework"><HomeworkMessage instituteName={name} tenantId={tenantId} /></TabsContent>
+        <TabsContent value="learnings"><LearningsMessage instituteName={name} tenantId={tenantId} /></TabsContent>
       </Tabs>
     </div>
   );
