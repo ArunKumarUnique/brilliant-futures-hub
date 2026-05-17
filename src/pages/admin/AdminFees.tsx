@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -28,8 +29,8 @@ interface StudentWithFee {
 
 const MonthlyFeesTab = () => {
   const { config, tr } = useTenant();
+  const { tenantId } = useAdmin();
   const { language } = useLanguage();
-  const tenantId = config.id;
   const packages = config.packages?.items || [];
 
   const currentMonth = new Date().getMonth() + 1;
@@ -43,6 +44,12 @@ const MonthlyFeesTab = () => {
   const [viewingFees, setViewingFees] = useState<StudentWithFee | null>(null);
 
   const fetchStudentsWithFees = async () => {
+    if (!tenantId) {
+      toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
+      setStudents([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const { data: allStudents, error } = await supabase
       .from('students')
@@ -62,6 +69,7 @@ const MonthlyFeesTab = () => {
     const { data: feeData } = await supabase
       .from('fee_records')
       .select('student_id, status')
+      .eq('tenant_id', tenantId)
       .in('student_id', allStudents.map(s => s.id))
       .eq('month', Number(month))
       .eq('year', Number(year));
