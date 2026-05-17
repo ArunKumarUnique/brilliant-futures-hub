@@ -40,7 +40,7 @@ const AppRoutes = () => {
   const adminPassword = config.admin?.password || '';
 
   return (
-    <AdminProvider adminEmail={adminEmail} adminPassword={adminPassword} defaultTenantId={config.id}>
+    <AdminProvider adminEmail={adminEmail} adminPassword={adminPassword} defaultTenantId={config.id} defaultTenantName={config.instituteName}>
       <Routes>
         {/* Public site */}
         <Route path="/" element={<PublicLayout><Index /></PublicLayout>} />
