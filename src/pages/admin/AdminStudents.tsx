@@ -84,6 +84,7 @@ const AdminStudents = () => {
         const { data: feeData } = await supabase
           .from('fee_records')
           .select('student_id, status')
+          .eq('tenant_id', tenantId)
           .in('student_id', data.map(s => s.id))
           .eq('month', currentMonth)
           .eq('year', currentYear);
