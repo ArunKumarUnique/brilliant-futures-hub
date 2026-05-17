@@ -155,6 +155,7 @@ export type Database = {
           payment_method: string | null
           status: string
           student_id: string
+          tenant_id: string | null
           year: number
         }
         Insert: {
@@ -167,6 +168,7 @@ export type Database = {
           payment_method?: string | null
           status?: string
           student_id: string
+          tenant_id?: string | null
           year: number
         }
         Update: {
@@ -179,6 +181,7 @@ export type Database = {
           payment_method?: string | null
           status?: string
           student_id?: string
+          tenant_id?: string | null
           year?: number
         }
         Relationships: [
