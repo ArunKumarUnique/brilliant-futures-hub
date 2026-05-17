@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Copy } from 'lucide-react';
+import { ArrowLeft, Copy, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const PlatformTenantView = () => {
@@ -47,9 +47,14 @@ const PlatformTenantView = () => {
       </Link>
 
       <Card className="p-4 sm:p-6">
-        <div className="flex justify-between items-start mb-3">
+        <div className="flex justify-between items-start mb-3 gap-2">
           <h1 className="text-xl font-bold">{tenant.institute_name}</h1>
-          <Badge variant={tenant.status === 'active' ? 'default' : 'secondary'}>{tenant.status}</Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant={tenant.status === 'active' ? 'default' : 'secondary'}>{tenant.status}</Badge>
+            <Link to={`/platform-admin/tenants/${tenant.id}/edit`}>
+              <Button variant="outline" size="sm"><Pencil className="h-4 w-4 mr-1" /> Edit</Button>
+            </Link>
+          </div>
         </div>
         <Row label="Tenant ID" value={tenant.tenant_id} />
         <Row label="Owner" value={`${tenant.owner_first_name} ${tenant.owner_last_name}`} />

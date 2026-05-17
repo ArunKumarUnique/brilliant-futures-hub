@@ -4,8 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Eye, Power } from 'lucide-react';
+import { Plus, Eye, Power, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface Tenant {
   id: string;
@@ -17,18 +21,25 @@ interface Tenant {
   mobile: string;
   institute_type: string | null;
   status: string;
+  created_at: string;
 }
+
+const fmtDate = (s: string) => {
+  try { return new Date(s).toLocaleDateString(); } catch { return '—'; }
+};
 
 const PlatformDashboard = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<Tenant | null>(null);
   const { toast } = useToast();
 
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('tenants_registry')
-      .select('id, tenant_id, institute_name, owner_first_name, owner_last_name, email, mobile, institute_type, status')
+      .select('id, tenant_id, institute_name, owner_first_name, owner_last_name, email, mobile, institute_type, status, created_at')
+      .neq('status', 'deleted')
       .order('created_at', { ascending: false });
     if (error) {
       toast({ title: 'Failed to load tenants', description: error.message, variant: 'destructive' });
@@ -38,9 +49,7 @@ const PlatformDashboard = () => {
     setLoading(false);
   };
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   const toggleStatus = async (t: Tenant) => {
     const newStatus = t.status === 'active' ? 'disabled' : 'active';
@@ -49,6 +58,18 @@ const PlatformDashboard = () => {
       toast({ title: 'Update failed', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: `Tenant ${newStatus === 'active' ? 'enabled' : 'disabled'}` });
+      load();
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from('tenants_registry').update({ status: 'deleted' }).eq('id', deleteTarget.id);
+    if (error) {
+      toast({ title: 'Delete failed', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Tenant deleted' });
+      setDeleteTarget(null);
       load();
     }
   };
@@ -86,16 +107,21 @@ const PlatformDashboard = () => {
                     <Badge variant={t.status === 'active' ? 'default' : 'secondary'}>{t.status}</Badge>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {t.owner_first_name} {t.owner_last_name} · {t.mobile} · {t.institute_type || '—'}
+                    {t.owner_first_name} {t.owner_last_name} · {t.mobile}
                   </div>
-                  <div className="flex gap-2 pt-1">
-                    <Link to={`/platform-admin/tenants/${t.id}`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Eye className="h-4 w-4 mr-1" /> View
-                      </Button>
+                  <div className="text-xs text-muted-foreground">Created {fmtDate(t.created_at)}</div>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <Link to={`/platform-admin/tenants/${t.id}`}>
+                      <Button variant="outline" size="sm" className="w-full"><Eye className="h-4 w-4 mr-1" /> View</Button>
                     </Link>
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => toggleStatus(t)}>
+                    <Link to={`/platform-admin/tenants/${t.id}/edit`}>
+                      <Button variant="outline" size="sm" className="w-full"><Pencil className="h-4 w-4 mr-1" /> Edit</Button>
+                    </Link>
+                    <Button variant="outline" size="sm" onClick={() => toggleStatus(t)}>
                       <Power className="h-4 w-4 mr-1" /> {t.status === 'active' ? 'Disable' : 'Enable'}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setDeleteTarget(t)} className="text-destructive">
+                      <Trash2 className="h-4 w-4 mr-1" /> Delete
                     </Button>
                   </div>
                 </div>
@@ -110,8 +136,8 @@ const PlatformDashboard = () => {
                     <th className="text-left p-3">Owner</th>
                     <th className="text-left p-3">Email</th>
                     <th className="text-left p-3">Mobile</th>
-                    <th className="text-left p-3">Type</th>
                     <th className="text-left p-3">Status</th>
+                    <th className="text-left p-3">Created</th>
                     <th className="text-right p-3">Actions</th>
                   </tr>
                 </thead>
@@ -122,16 +148,22 @@ const PlatformDashboard = () => {
                       <td className="p-3">{t.owner_first_name} {t.owner_last_name}</td>
                       <td className="p-3">{t.email}</td>
                       <td className="p-3">{t.mobile}</td>
-                      <td className="p-3">{t.institute_type || '—'}</td>
                       <td className="p-3">
                         <Badge variant={t.status === 'active' ? 'default' : 'secondary'}>{t.status}</Badge>
                       </td>
-                      <td className="p-3 text-right space-x-2">
+                      <td className="p-3">{fmtDate(t.created_at)}</td>
+                      <td className="p-3 text-right space-x-1">
                         <Link to={`/platform-admin/tenants/${t.id}`}>
-                          <Button variant="outline" size="sm"><Eye className="h-4 w-4" /></Button>
+                          <Button variant="outline" size="sm" title="View"><Eye className="h-4 w-4" /></Button>
                         </Link>
-                        <Button variant="outline" size="sm" onClick={() => toggleStatus(t)}>
+                        <Link to={`/platform-admin/tenants/${t.id}/edit`}>
+                          <Button variant="outline" size="sm" title="Edit"><Pencil className="h-4 w-4" /></Button>
+                        </Link>
+                        <Button variant="outline" size="sm" onClick={() => toggleStatus(t)} title={t.status === 'active' ? 'Disable' : 'Enable'}>
                           <Power className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setDeleteTarget(t)} title="Delete" className="text-destructive">
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </td>
                     </tr>
@@ -142,6 +174,24 @@ const PlatformDashboard = () => {
           </>
         )}
       </Card>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete tenant?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <span className="font-medium">{deleteTarget?.institute_name}</span>?
+              The tenant will be marked as deleted and hidden from the list.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -70,7 +70,7 @@ const PlatformTenantNew = () => {
       .from('tenants_registry').select('id').eq('email', email).maybeSingle();
     if (existing) {
       setSubmitting(false);
-      toast({ title: 'Duplicate', description: 'A tenant with this email already exists', variant: 'destructive' });
+      toast({ title: 'Duplicate', description: 'Email already exists', variant: 'destructive' });
       return;
     }
 
