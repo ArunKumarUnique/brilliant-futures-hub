@@ -13,6 +13,7 @@ import PlatformLayout from "@/pages/platform/PlatformLayout";
 import PlatformDashboard from "@/pages/platform/PlatformDashboard";
 import PlatformTenantNew from "@/pages/platform/PlatformTenantNew";
 import PlatformTenantView from "@/pages/platform/PlatformTenantView";
+import PlatformTenantEdit from "@/pages/platform/PlatformTenantEdit";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const PlatformRoutes = () => (
           <Route path="dashboard" element={<PlatformDashboard />} />
           <Route path="tenants/new" element={<PlatformTenantNew />} />
           <Route path="tenants/:id" element={<PlatformTenantView />} />
+          <Route path="tenants/:id/edit" element={<PlatformTenantEdit />} />
         </Route>
       </Routes>
     </TooltipProvider>

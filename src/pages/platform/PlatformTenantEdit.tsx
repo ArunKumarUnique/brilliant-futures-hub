@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,47 +7,52 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
-
-const slugify = (s: string) =>
-  s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 40) || 'tenant';
-
-const DEFAULT_PASSWORD = 'Tutorials@1234';
+import { ArrowLeft } from 'lucide-react';
 
 const sanitizeMobile = (v: string) => v.replace(/\D/g, '').slice(0, 10);
 const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
-interface Created {
-  tenantName: string;
-  email: string;
-  password: string;
-}
-
-const PlatformTenantNew = () => {
+const PlatformTenantEdit = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [created, setCreated] = useState<Created | null>(null);
-
+  const [credId, setCredId] = useState<string | null>(null);
   const [form, setForm] = useState({
-    institute_name: '',
-    owner_first_name: '',
-    owner_last_name: '',
-    email: '',
-    mobile: '',
-    address: '',
-    city: '',
-    state: '',
-    pincode: '',
+    institute_name: '', owner_first_name: '', owner_last_name: '',
+    email: '', mobile: '', address: '', city: '', state: '', pincode: '',
     institute_type: 'Tutorial',
   });
+  const [password, setPassword] = useState('');
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
+  useEffect(() => {
+    (async () => {
+      const { data: t } = await supabase.from('tenants_registry').select('*').eq('id', id).maybeSingle();
+      const { data: c } = await supabase.from('tenant_admin_credentials').select('id').eq('tenant_registry_id', id).maybeSingle();
+      if (t) {
+        setForm({
+          institute_name: t.institute_name || '',
+          owner_first_name: t.owner_first_name || '',
+          owner_last_name: t.owner_last_name || '',
+          email: t.email || '',
+          mobile: t.mobile || '',
+          address: t.address || '',
+          city: t.city || '',
+          state: t.state || '',
+          pincode: t.pincode || '',
+          institute_type: t.institute_type || 'Tutorial',
+        });
+      }
+      if (c) setCredId(c.id);
+      setLoading(false);
+    })();
+  }, [id]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Validations
     if (!form.institute_name.trim() || !form.owner_first_name.trim() || !form.owner_last_name.trim() ||
         !form.address.trim() || !form.city.trim() || !form.state.trim() || !form.pincode.trim()) {
       toast({ title: 'Validation', description: 'Please fill all required fields', variant: 'destructive' });
@@ -61,85 +66,58 @@ const PlatformTenantNew = () => {
       toast({ title: 'Validation', description: 'Enter valid 10-digit mobile number', variant: 'destructive' });
       return;
     }
+    if (password && password.trim().length < 6) {
+      toast({ title: 'Validation', description: 'Password must be at least 6 characters', variant: 'destructive' });
+      return;
+    }
 
-    setSubmitting(true);
     const email = form.email.trim().toLowerCase();
+    setSubmitting(true);
 
-    // Duplicate check
-    const { data: existing } = await supabase
-      .from('tenants_registry').select('id').eq('email', email).maybeSingle();
-    if (existing) {
+    // Duplicate email check (excluding current)
+    const { data: dup } = await supabase
+      .from('tenants_registry').select('id').eq('email', email).neq('id', id).maybeSingle();
+    if (dup) {
       setSubmitting(false);
       toast({ title: 'Duplicate', description: 'Email already exists', variant: 'destructive' });
       return;
     }
 
-    // Generate unique tenant_id
-    const base = slugify(form.institute_name);
-    const tenantId = `${base}-${Math.random().toString(36).slice(2, 7)}`;
-
-    const { data: inserted, error } = await supabase
+    const { error } = await supabase
       .from('tenants_registry')
-      .insert({ ...form, email, tenant_id: tenantId })
-      .select('id')
-      .single();
-
-    if (error || !inserted) {
+      .update({ ...form, email })
+      .eq('id', id);
+    if (error) {
       setSubmitting(false);
-      toast({ title: 'Failed', description: error?.message || 'Could not create tenant', variant: 'destructive' });
+      toast({ title: 'Failed', description: error.message, variant: 'destructive' });
       return;
     }
 
-    const tempPassword = DEFAULT_PASSWORD;
-    const { error: credErr } = await supabase.from('tenant_admin_credentials').insert({
-      tenant_registry_id: inserted.id,
-      email,
-      temp_password: tempPassword,
-    });
+    // Update credentials email + password (if provided)
+    if (credId) {
+      const credUpdate: any = { email };
+      if (password.trim()) credUpdate.temp_password = password.trim();
+      await supabase.from('tenant_admin_credentials').update(credUpdate).eq('id', credId);
+    } else if (password.trim()) {
+      await supabase.from('tenant_admin_credentials').insert({
+        tenant_registry_id: id, email, temp_password: password.trim(),
+      });
+    }
 
     setSubmitting(false);
-    if (credErr) {
-      toast({ title: 'Partial', description: 'Tenant created but credentials failed', variant: 'destructive' });
-      return;
-    }
-
-    setCreated({ tenantName: form.institute_name, email, password: tempPassword });
+    toast({ title: 'Tenant updated' });
+    navigate(`/platform-admin/tenants/${id}`);
   };
 
-  const copyCreds = () => {
-    if (!created) return;
-    const text = `Tenant: ${created.tenantName}\nEmail: ${created.email}\nPassword: ${created.password}`;
-    navigator.clipboard.writeText(text);
-    toast({ title: 'Copied to clipboard' });
-  };
-
-  if (created) {
-    return (
-      <div className="max-w-lg mx-auto space-y-4">
-        <Card className="p-6 space-y-4">
-          <h2 className="text-xl font-bold text-primary">Tenant Onboarded ✓</h2>
-          <div className="bg-muted rounded p-4 space-y-2 text-sm">
-            <div><span className="text-muted-foreground">Tenant:</span> <span className="font-medium">{created.tenantName}</span></div>
-            <div><span className="text-muted-foreground">Email:</span> <span className="font-medium break-all">{created.email}</span></div>
-            <div><span className="text-muted-foreground">Default Password:</span> <span className="font-mono font-medium">{created.password}</span></div>
-          </div>
-          <p className="text-xs text-muted-foreground">Share these credentials securely. The tenant admin should change the password on first login.</p>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button onClick={copyCreds} className="flex-1"><Copy className="h-4 w-4 mr-1" /> Copy Credentials</Button>
-            <Button variant="outline" onClick={() => navigate('/platform-admin/dashboard')} className="flex-1">Back to Dashboard</Button>
-          </div>
-        </Card>
-      </div>
-    );
-  }
+  if (loading) return <div className="text-center text-muted-foreground py-8">Loading...</div>;
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
-      <Link to="/platform-admin/dashboard" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+      <Link to={`/platform-admin/tenants/${id}`} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4 mr-1" /> Back
       </Link>
       <Card className="p-4 sm:p-6">
-        <h1 className="text-xl font-bold mb-4">Onboard New Tenant</h1>
+        <h1 className="text-xl font-bold mb-4">Edit Tenant</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label>Institute Name *</Label>
@@ -162,12 +140,9 @@ const PlatformTenantNew = () => {
             </div>
             <div>
               <Label>Mobile *</Label>
-              <Input
-                type="tel" inputMode="numeric" maxLength={10}
+              <Input type="tel" inputMode="numeric" maxLength={10}
                 value={form.mobile}
-                onChange={(e) => set('mobile', sanitizeMobile(e.target.value))}
-                placeholder="10-digit number" required
-              />
+                onChange={(e) => set('mobile', sanitizeMobile(e.target.value))} required />
             </div>
           </div>
           <div>
@@ -185,7 +160,8 @@ const PlatformTenantNew = () => {
             </div>
             <div>
               <Label>Pincode *</Label>
-              <Input inputMode="numeric" value={form.pincode} onChange={(e) => set('pincode', e.target.value.replace(/\D/g, '').slice(0, 10))} required />
+              <Input inputMode="numeric" value={form.pincode}
+                onChange={(e) => set('pincode', e.target.value.replace(/\D/g, '').slice(0, 10))} required />
             </div>
           </div>
           <div>
@@ -198,13 +174,24 @@ const PlatformTenantNew = () => {
               </SelectContent>
             </Select>
           </div>
-          <Button type="submit" disabled={submitting} className="w-full">
-            {submitting ? 'Creating...' : 'Onboard Tenant'}
-          </Button>
+          <div>
+            <Label>New Password (optional)</Label>
+            <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)}
+              placeholder="Leave blank to keep current" />
+            <p className="text-xs text-muted-foreground mt-1">Minimum 6 characters. Leave empty to keep existing password.</p>
+          </div>
+          <div className="flex gap-2">
+            <Button type="submit" disabled={submitting} className="flex-1">
+              {submitting ? 'Saving...' : 'Save Changes'}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => navigate(`/platform-admin/tenants/${id}`)}>
+              Cancel
+            </Button>
+          </div>
         </form>
       </Card>
     </div>
   );
 };
 
-export default PlatformTenantNew;
+export default PlatformTenantEdit;
