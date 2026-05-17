@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -38,7 +39,7 @@ const CLASS_OPTIONS = [
 
 const AdminDailyLearnings = () => {
   const { config } = useTenant();
-  const tenantId = config.id;
+  const { tenantId } = useAdmin();
 
   const [learnings, setLearnings] = useState<DailyLearning[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -58,6 +59,13 @@ const AdminDailyLearnings = () => {
   const [filterClass, setFilterClass] = useState('all');
 
   const fetchData = async () => {
+    if (!tenantId) {
+      toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
+      setLearnings([]);
+      setStudents([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const [{ data: lData }, { data: sData }] = await Promise.all([
       supabase.from('daily_learnings').select('*').eq('tenant_id', tenantId).order('date', { ascending: false }).order('created_at', { ascending: false }),
@@ -79,6 +87,10 @@ const AdminDailyLearnings = () => {
   };
 
   const handleSubmit = async () => {
+    if (!tenantId) {
+      toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
+      return;
+    }
     if (!logClass || !topic.trim()) {
       toast({ title: 'Class and Topic are required', variant: 'destructive' });
       return;
@@ -104,7 +116,8 @@ const AdminDailyLearnings = () => {
   };
 
   const deleteEntry = async (id: string) => {
-    await supabase.from('daily_learnings').delete().eq('id', id);
+    if (!tenantId) return;
+    await supabase.from('daily_learnings').delete().eq('id', id).eq('tenant_id', tenantId);
     toast({ title: 'Entry deleted' });
     fetchData();
   };
