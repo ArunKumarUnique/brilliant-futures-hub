@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -19,7 +20,7 @@ interface Student {
 
 const CertificateGenerator = () => {
   const { config } = useTenant();
-  const tenantId = config.id;
+  const { tenantId } = useAdmin();
 
   const [students, setStudents] = useState<Student[]>([]);
   const [studentId, setStudentId] = useState('');
@@ -32,6 +33,10 @@ const CertificateGenerator = () => {
 
   useEffect(() => {
     const load = async () => {
+      if (!tenantId) {
+        setStudents([]);
+        return;
+      }
       const { data } = await supabase
         .from('students')
         .select('id, student_name, parent_mobile, class')
@@ -57,6 +62,7 @@ const CertificateGenerator = () => {
 
   const generate = async () => {
     if (!selectedStudent) { toast({ title: 'Select a student', variant: 'destructive' }); return; }
+    if (!tenantId) { toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' }); return; }
     setGenerating(true);
     try {
       const doc = await generateCertificatePdf({
