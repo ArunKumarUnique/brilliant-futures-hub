@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -30,7 +31,7 @@ const SUMMER_CAMP_FEE_DEFAULT = 1500;
 
 const SummerCampFees = () => {
   const { config } = useTenant();
-  const tenantId = config.id;
+  const { tenantId } = useAdmin();
   const summerPkg = config.packages?.items.find(p => p.id === 'summer-camp');
   const defaultFee = summerPkg?.flatFee ?? SUMMER_CAMP_FEE_DEFAULT;
 
@@ -49,6 +50,12 @@ const SummerCampFees = () => {
   const [amountPaid, setAmountPaid] = useState<string>(String(defaultFee));
 
   const fetchRows = async () => {
+    if (!tenantId) {
+      toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
+      setRows([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const { data: students, error } = await supabase
       .from('students')
@@ -127,7 +134,8 @@ const SummerCampFees = () => {
       const { error } = await supabase
         .from('summer_camp_payments')
         .update({ status, amount, paid_date: payload.paid_date, payment_method: payload.payment_method })
-        .eq('id', row.payment_id);
+        .eq('id', row.payment_id)
+        .eq('tenant_id', tenantId);
       return error;
     }
     const { error } = await supabase.from('summer_camp_payments').insert(payload);
@@ -169,7 +177,8 @@ const SummerCampFees = () => {
     for (const r of updates) {
       await supabase.from('summer_camp_payments')
         .update({ status: 'paid', paid_date: paidDate, payment_method: paymentMethod })
-        .eq('id', r.payment_id!);
+        .eq('id', r.payment_id!)
+        .eq('tenant_id', tenantId);
     }
     toast({ title: `${pendingSelected.length} payments marked as paid` });
     setBulkOpen(false);
@@ -181,7 +190,8 @@ const SummerCampFees = () => {
     const { error } = await supabase
       .from('summer_camp_payments')
       .update({ status: 'pending', paid_date: null, payment_method: null })
-      .eq('id', revertId);
+      .eq('id', revertId)
+      .eq('tenant_id', tenantId);
     if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); }
     else toast({ title: 'Payment reverted to pending' });
     setRevertId(null);
