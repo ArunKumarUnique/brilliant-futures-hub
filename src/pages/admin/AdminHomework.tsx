@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -45,7 +46,7 @@ const SUBJECT_OPTIONS = [
 
 const AdminHomework = () => {
   const { config } = useTenant();
-  const tenantId = config.id;
+  const { tenantId } = useAdmin();
 
   const [homework, setHomework] = useState<Homework[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -70,6 +71,12 @@ const AdminHomework = () => {
   const [filterDateOpen, setFilterDateOpen] = useState(false);
 
   const fetchHomework = async () => {
+    if (!tenantId) {
+      toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
+      setHomework([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const { data, error } = await supabase
       .from('homework')
@@ -82,6 +89,10 @@ const AdminHomework = () => {
   };
 
   const fetchStudents = async () => {
+    if (!tenantId) {
+      setStudents([]);
+      return;
+    }
     const { data } = await supabase
       .from('students')
       .select('id, student_name, class')
@@ -107,6 +118,10 @@ const AdminHomework = () => {
   };
 
   const handleSubmit = async () => {
+    if (!tenantId) {
+      toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
+      return;
+    }
     if (!title.trim() || !description.trim()) {
       toast({ title: 'Title and Description are required', variant: 'destructive' });
       return;
