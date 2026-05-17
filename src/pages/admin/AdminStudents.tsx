@@ -128,7 +128,7 @@ const AdminStudents = () => {
   };
 
   const handleEdit = async (data: StudentFormData) => {
-    if (!editingStudent) return;
+    if (!editingStudent || !tenantId) return;
     const { error } = await supabase.from('students').update({
       student_name: data.student_name.trim(),
       parent_name: data.parent_name.trim() || null,
