@@ -236,9 +236,10 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
               <Select value={form.package_id} onValueChange={v => handleChange('package_id', v)}>
                 <SelectTrigger><SelectValue placeholder="Select package" /></SelectTrigger>
                 <SelectContent>
-                  {packages.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{typeof p.title === 'string' ? p.title : tr(p.title, language)}</SelectItem>
-                  ))}
+                  {packages.map(p => {
+                    const value = p.type === 'summer_camp' ? 'summer-camp' : p.id;
+                    return <SelectItem key={p.id} value={value}>{p.name}</SelectItem>;
+                  })}
                 </SelectContent>
               </Select>
             </div>
