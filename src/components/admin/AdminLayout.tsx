@@ -111,7 +111,7 @@ const AdminLayout = () => {
 
   return (
     <div className="min-h-screen flex bg-muted/30">
-      <aside className={`${collapsed ? 'w-16' : 'w-60'} bg-card border-r border-border flex flex-col shrink-0 transition-[width] duration-200`}>
+      <aside className={`${collapsed ? 'w-16' : 'w-60'} bg-card border-r border-border flex flex-col shrink-0 transition-[width] duration-200 sticky top-0 h-screen self-start`}>
         <SidebarNav collapsed={collapsed} />
       </aside>
 
