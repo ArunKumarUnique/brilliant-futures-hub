@@ -50,9 +50,22 @@ const CLASS_OPTIONS = [
 ];
 
 const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultStudentType }: StudentFormProps) => {
-  const { config, tr } = useTenant();
-  const { language } = useLanguage();
-  const packages = config.packages?.items || [];
+  const { tenantId } = useAdmin();
+  const [packages, setPackages] = useState<PackageOption[]>([]);
+
+  useEffect(() => {
+    if (!open || !tenantId) return;
+    (async () => {
+      const { data } = await supabase
+        .from('tenant_packages')
+        .select('id, name, type, fee')
+        .eq('tenant_id', tenantId)
+        .eq('status', 'active')
+        .order('type', { ascending: true })
+        .order('name', { ascending: true });
+      setPackages((data || []) as PackageOption[]);
+    })();
+  }, [open, tenantId]);
 
   const emptyForm: StudentFormData = {
     student_name: '',
