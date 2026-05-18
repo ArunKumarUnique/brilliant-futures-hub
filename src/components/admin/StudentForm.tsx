@@ -6,9 +6,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useTenant } from '@/contexts/TenantContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useAdmin } from '@/contexts/AdminContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+
+interface PackageOption {
+  id: string;
+  name: string;
+  type: 'regular' | 'summer_camp';
+  fee: number;
+}
 
 export type StudentType = 'regular' | 'summer_camp';
 
@@ -43,9 +50,22 @@ const CLASS_OPTIONS = [
 ];
 
 const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultStudentType }: StudentFormProps) => {
-  const { config, tr } = useTenant();
-  const { language } = useLanguage();
-  const packages = config.packages?.items || [];
+  const { tenantId } = useAdmin();
+  const [packages, setPackages] = useState<PackageOption[]>([]);
+
+  useEffect(() => {
+    if (!open || !tenantId) return;
+    (async () => {
+      const { data } = await supabase
+        .from('tenant_packages')
+        .select('id, name, type, fee')
+        .eq('tenant_id', tenantId)
+        .eq('status', 'active')
+        .order('type', { ascending: true })
+        .order('name', { ascending: true });
+      setPackages((data || []) as PackageOption[]);
+    })();
+  }, [open, tenantId]);
 
   const emptyForm: StudentFormData = {
     student_name: '',
@@ -216,9 +236,10 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
               <Select value={form.package_id} onValueChange={v => handleChange('package_id', v)}>
                 <SelectTrigger><SelectValue placeholder="Select package" /></SelectTrigger>
                 <SelectContent>
-                  {packages.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{typeof p.title === 'string' ? p.title : tr(p.title, language)}</SelectItem>
-                  ))}
+                  {packages.map(p => {
+                    const value = p.type === 'summer_camp' ? 'summer-camp' : p.id;
+                    return <SelectItem key={p.id} value={value}>{p.name}</SelectItem>;
+                  })}
                 </SelectContent>
               </Select>
             </div>
