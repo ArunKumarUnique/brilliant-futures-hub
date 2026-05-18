@@ -1,8 +1,10 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { toPng, toJpeg } from 'html-to-image';
 import { Download, Image, FileImage, ChevronLeft } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TemplateRenderer from '@/components/brochure/TemplateRenderer';
 import { BrochureContent, BrochureTemplateId, BROCHURE_TEMPLATES, BrochureTemplate } from '@/types/brochure';
+import type { TenantConfig } from '@/types/tenant';
 
 const defaultContent: BrochureContent = {
   title: '',
@@ -25,15 +28,48 @@ const defaultContent: BrochureContent = {
 };
 
 const BrochureBuilder = () => {
-  const { config } = useTenant();
+  const { config: baseConfig } = useTenant();
+  const { tenantId } = useAdmin();
   const { tr } = useLanguage();
   const previewRef = useRef<HTMLDivElement>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<BrochureTemplate | null>(null);
+  const [tenantOverrides, setTenantOverrides] = useState<Partial<TenantConfig> | null>(null);
+
+  useEffect(() => {
+    if (!tenantId) return;
+    (async () => {
+      const { data: reg } = await supabase
+        .from('tenants_registry')
+        .select('institute_name, logo_url, email, mobile, address, city, state, pincode')
+        .eq('tenant_id', tenantId)
+        .maybeSingle();
+      if (!reg) return;
+      const addressLine = [reg.address, reg.city, reg.state, reg.pincode].filter(Boolean).join(', ');
+      setTenantOverrides({
+        instituteName: reg.institute_name || baseConfig.instituteName,
+        logo: reg.logo_url || baseConfig.logo,
+        contact: {
+          ...baseConfig.contact,
+          email: reg.email || baseConfig.contact.email,
+          phone: reg.mobile || baseConfig.contact.phone,
+          whatsappNumber: reg.mobile || baseConfig.contact.whatsappNumber,
+          address: addressLine || baseConfig.contact.address,
+          addressHtml: addressLine ? addressLine.replace(/, /g, '<br/>') : baseConfig.contact.addressHtml,
+        },
+      });
+    })();
+  }, [tenantId]);
+
+  const config = useMemo<TenantConfig>(
+    () => (tenantOverrides ? { ...baseConfig, ...tenantOverrides } as TenantConfig : baseConfig),
+    [baseConfig, tenantOverrides]
+  );
+
   const [content, setContent] = useState<BrochureContent>({
     ...defaultContent,
-    academicYear: config.academicYear,
-    selectedFacultyId: config.faculty[0]?.id || '',
-    selectedGalleryImage: config.hero.images[0] || '',
+    academicYear: baseConfig.academicYear,
+    selectedFacultyId: baseConfig.faculty[0]?.id || '',
+    selectedGalleryImage: baseConfig.hero.images[0] || '',
   });
   const [exporting, setExporting] = useState(false);
 
