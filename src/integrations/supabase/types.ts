@@ -411,6 +411,42 @@ export type Database = {
           },
         ]
       }
+      tenant_packages: {
+        Row: {
+          created_at: string
+          description: string | null
+          fee: number
+          id: string
+          name: string
+          status: string
+          tenant_id: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          fee?: number
+          id?: string
+          name: string
+          status?: string
+          tenant_id: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          fee?: number
+          id?: string
+          name?: string
+          status?: string
+          tenant_id?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tenants_registry: {
         Row: {
           address: string

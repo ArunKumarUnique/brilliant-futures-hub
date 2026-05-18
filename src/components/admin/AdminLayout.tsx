@@ -21,18 +21,19 @@ const navItems = [
 ];
 
 const SidebarNav = ({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) => {
-  const { logout } = useAdmin();
+  const { logout, tenantName } = useAdmin();
   const { config } = useTenant();
   const location = useLocation();
+  const displayName = tenantName || config.instituteName;
 
   return (
     <>
       <div className={`p-4 border-b border-border ${collapsed ? 'text-center' : ''}`}>
         {collapsed ? (
-          <span className="font-bold text-foreground text-lg">{config.instituteName.charAt(0)}</span>
+          <span className="font-bold text-foreground text-lg">{displayName.charAt(0)}</span>
         ) : (
           <>
-            <h2 className="font-bold text-foreground text-lg truncate">{config.instituteName}</h2>
+            <h2 className="font-bold text-foreground text-lg truncate">{displayName}</h2>
             <p className="text-xs text-muted-foreground">Admin Console</p>
           </>
         )}
@@ -110,7 +111,7 @@ const AdminLayout = () => {
 
   return (
     <div className="min-h-screen flex bg-muted/30">
-      <aside className={`${collapsed ? 'w-16' : 'w-60'} bg-card border-r border-border flex flex-col shrink-0 transition-[width] duration-200`}>
+      <aside className={`${collapsed ? 'w-16' : 'w-60'} bg-card border-r border-border flex flex-col shrink-0 transition-[width] duration-200 sticky top-0 h-screen self-start`}>
         <SidebarNav collapsed={collapsed} />
       </aside>
 
