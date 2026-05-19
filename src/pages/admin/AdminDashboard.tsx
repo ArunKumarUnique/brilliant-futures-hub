@@ -140,20 +140,24 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Summer Camp</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        {summerStats.map((stat) => (
-          <div key={stat.label} className="bg-card border border-border rounded-xl p-4 sm:p-5 shadow-sm">
-            <div className="flex items-center gap-3 mb-3">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color}`}>
-                <stat.icon className="w-5 h-5" />
+      {summerCampEnabled && (
+        <>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Summer Camp</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            {summerStats.map((stat) => (
+              <div key={stat.label} className="bg-card border border-border rounded-xl p-4 sm:p-5 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color}`}>
+                    <stat.icon className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs sm:text-sm text-muted-foreground">{stat.label}</span>
+                </div>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{stat.value}</p>
               </div>
-              <span className="text-xs sm:text-sm text-muted-foreground">{stat.label}</span>
-            </div>
-            <p className="text-xl sm:text-2xl font-bold text-foreground">{stat.value}</p>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
 
       {/* Monthly Revenue Chart */}
       <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
