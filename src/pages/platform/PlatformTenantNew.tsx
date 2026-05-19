@@ -43,6 +43,7 @@ const PlatformTenantNew = () => {
     pincode: '',
     institute_type: 'Tutorial',
   });
+  const [summerCampEnabled, setSummerCampEnabled] = useState(true);
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
