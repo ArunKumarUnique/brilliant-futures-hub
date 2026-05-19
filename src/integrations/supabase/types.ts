@@ -463,6 +463,7 @@ export type Database = {
           pincode: string
           state: string
           status: string
+          summer_camp_enabled: boolean
           tenant_id: string
         }
         Insert: {
@@ -480,6 +481,7 @@ export type Database = {
           pincode: string
           state: string
           status?: string
+          summer_camp_enabled?: boolean
           tenant_id: string
         }
         Update: {
@@ -497,6 +499,7 @@ export type Database = {
           pincode?: string
           state?: string
           status?: string
+          summer_camp_enabled?: boolean
           tenant_id?: string
         }
         Relationships: []
