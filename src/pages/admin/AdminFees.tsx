@@ -191,7 +191,7 @@ const AdminFees = () => {
       <h1 className="text-2xl font-bold text-foreground mb-4">Fee Tracking</h1>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className={`w-full grid grid-cols-2 sm:grid-cols-${visibleTabs} h-auto`}>
+        <TabsList className={`w-full grid grid-cols-2 ${gridCols} h-auto`}>
           <TabsTrigger value="monthly" className="flex-col sm:flex-row gap-1 py-2.5 text-xs sm:text-sm">
             <Receipt className="w-4 h-4" /> Monthly
           </TabsTrigger>
