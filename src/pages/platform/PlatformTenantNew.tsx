@@ -82,7 +82,7 @@ const PlatformTenantNew = () => {
 
     const { data: inserted, error } = await supabase
       .from('tenants_registry')
-      .insert({ ...form, email, tenant_id: tenantId })
+      .insert({ ...form, email, tenant_id: tenantId, summer_camp_enabled: summerCampEnabled })
       .select('id')
       .single();
 
