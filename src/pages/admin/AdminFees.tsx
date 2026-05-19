@@ -184,7 +184,7 @@ const MonthlyFeesTab = () => {
 const AdminFees = () => {
   const [tab, setTab] = useState('monthly');
   const { summerCampEnabled } = useAdmin();
-  const visibleTabs = summerCampEnabled ? 4 : 2;
+  const gridCols = summerCampEnabled ? 'sm:grid-cols-4' : 'sm:grid-cols-2';
 
   return (
     <div>
