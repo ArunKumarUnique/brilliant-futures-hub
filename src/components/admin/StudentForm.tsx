@@ -171,10 +171,12 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
                 <RadioGroupItem value="regular" id="type-regular" />
                 <span className="text-sm">Regular Student</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <RadioGroupItem value="summer_camp" id="type-summer" />
-                <span className="text-sm">Summer Camp Student</span>
-              </label>
+              {summerCampEnabled && (
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <RadioGroupItem value="summer_camp" id="type-summer" />
+                  <span className="text-sm">Summer Camp Student</span>
+                </label>
+              )}
             </RadioGroup>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
