@@ -28,7 +28,7 @@ interface FormState {
 const emptyForm: FormState = { name: '', fee: '', description: '', status: 'active' };
 
 const AdminPackages = () => {
-  const { tenantId } = useAdmin();
+  const { tenantId, summerCampEnabled } = useAdmin();
   const [packages, setPackages] = useState<TenantPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<{ type: PackageType; pkg: TenantPackage | null } | null>(null);
