@@ -39,7 +39,7 @@ const CLASS_OPTIONS = [
 
 const AdminStudents = () => {
   const { config, tr } = useTenant();
-  const { tenantId } = useAdmin();
+  const { tenantId, summerCampEnabled } = useAdmin();
   const { language } = useLanguage();
   const packages = config.packages?.items || [];
 
