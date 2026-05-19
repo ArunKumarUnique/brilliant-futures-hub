@@ -49,6 +49,7 @@ const AdminStudents = () => {
   const [filterClass, setFilterClass] = useState('all');
   const [filterPackage, setFilterPackage] = useState('all');
   const [typeTab, setTypeTab] = useState<StudentType>('regular');
+  useEffect(() => { if (!summerCampEnabled && typeTab === 'summer_camp') setTypeTab('regular'); }, [summerCampEnabled, typeTab]);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
