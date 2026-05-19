@@ -45,6 +45,7 @@ const AdminAttendance = () => {
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
   const [studentType, setStudentType] = useState<StudentType>('regular');
+  useEffect(() => { if (!summerCampEnabled && studentType === 'summer_camp') setStudentType('regular'); }, [summerCampEnabled, studentType]);
   const [students, setStudents] = useState<Student[]>([]);
   const [presentIds, setPresentIds] = useState<Set<string>>(new Set());
   const [arrivalTimes, setArrivalTimes] = useState<ArrivalTimes>({});
