@@ -200,6 +200,13 @@ const PlatformTenantNew = () => {
               </SelectContent>
             </Select>
           </div>
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div>
+              <Label className="text-sm">Summer Camp Enabled</Label>
+              <p className="text-xs text-muted-foreground">Show Summer Camp packages, fees, attendance & dashboard for this tenant.</p>
+            </div>
+            <Switch checked={summerCampEnabled} onCheckedChange={setSummerCampEnabled} />
+          </div>
           <Button type="submit" disabled={submitting} className="w-full">
             {submitting ? 'Creating...' : 'Onboard Tenant'}
           </Button>
