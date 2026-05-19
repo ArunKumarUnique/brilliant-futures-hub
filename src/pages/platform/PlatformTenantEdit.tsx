@@ -47,6 +47,7 @@ const PlatformTenantEdit = () => {
           pincode: t.pincode || '',
           institute_type: t.institute_type || 'Tutorial',
         });
+        setSummerCampEnabled(t.summer_camp_enabled ?? true);
       }
       if (c) setCredId(c.id);
       setLoading(false);
