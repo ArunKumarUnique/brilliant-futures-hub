@@ -25,6 +25,7 @@ const PlatformTenantEdit = () => {
     email: '', mobile: '', address: '', city: '', state: '', pincode: '',
     institute_type: 'Tutorial',
   });
+  const [summerCampEnabled, setSummerCampEnabled] = useState(true);
   const [password, setPassword] = useState('');
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
