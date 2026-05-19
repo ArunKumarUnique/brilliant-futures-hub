@@ -40,11 +40,12 @@ const formatTime12 = (time24: string) => {
 
 const AdminAttendance = () => {
   const { config } = useTenant();
-  const { tenantId } = useAdmin();
+  const { tenantId, summerCampEnabled } = useAdmin();
 
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
   const [studentType, setStudentType] = useState<StudentType>('regular');
+  useEffect(() => { if (!summerCampEnabled && studentType === 'summer_camp') setStudentType('regular'); }, [summerCampEnabled, studentType]);
   const [students, setStudents] = useState<Student[]>([]);
   const [presentIds, setPresentIds] = useState<Set<string>>(new Set());
   const [arrivalTimes, setArrivalTimes] = useState<ArrivalTimes>({});
@@ -264,16 +265,18 @@ const AdminAttendance = () => {
       </div>
 
       {/* Type Toggle */}
-      <Tabs value={studentType} onValueChange={(v) => setStudentType(v as StudentType)} className="mb-4">
-        <TabsList className="w-full grid grid-cols-2 h-auto">
-          <TabsTrigger value="regular" className="gap-1.5 py-2 text-xs sm:text-sm">
-            <Users className="w-4 h-4" /> Regular
-          </TabsTrigger>
-          <TabsTrigger value="summer_camp" className="gap-1.5 py-2 text-xs sm:text-sm">
-            <Sparkles className="w-4 h-4" /> Summer Camp
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {summerCampEnabled && (
+        <Tabs value={studentType} onValueChange={(v) => setStudentType(v as StudentType)} className="mb-4">
+          <TabsList className="w-full grid grid-cols-2 h-auto">
+            <TabsTrigger value="regular" className="gap-1.5 py-2 text-xs sm:text-sm">
+              <Users className="w-4 h-4" /> Regular
+            </TabsTrigger>
+            <TabsTrigger value="summer_camp" className="gap-1.5 py-2 text-xs sm:text-sm">
+              <Sparkles className="w-4 h-4" /> Summer Camp
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
 
       {/* Stats bar */}
       <div className="grid grid-cols-3 gap-3 mb-4">

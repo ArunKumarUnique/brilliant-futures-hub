@@ -34,9 +34,9 @@ const generateReceiptNo = (tenantId: string) => {
 
 const ReceiptGenerator = () => {
   const { config, tr } = useTenant();
-  const { tenantId } = useAdmin();
+  const { tenantId, summerCampEnabled } = useAdmin();
   const { language } = useLanguage();
-  const packages = config.packages?.items || [];
+  const packages = (config.packages?.items || []).filter(p => summerCampEnabled || p.id !== 'summer-camp');
 
   const [students, setStudents] = useState<Student[]>([]);
   const [studentId, setStudentId] = useState('');

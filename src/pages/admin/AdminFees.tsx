@@ -183,31 +183,37 @@ const MonthlyFeesTab = () => {
 
 const AdminFees = () => {
   const [tab, setTab] = useState('monthly');
+  const { summerCampEnabled } = useAdmin();
+  const gridCols = summerCampEnabled ? 'sm:grid-cols-4' : 'sm:grid-cols-2';
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-4">Fee Tracking</h1>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="w-full grid grid-cols-2 sm:grid-cols-4 h-auto">
+        <TabsList className={`w-full grid grid-cols-2 ${gridCols} h-auto`}>
           <TabsTrigger value="monthly" className="flex-col sm:flex-row gap-1 py-2.5 text-xs sm:text-sm">
             <Receipt className="w-4 h-4" /> Monthly
           </TabsTrigger>
-          <TabsTrigger value="summer" className="flex-col sm:flex-row gap-1 py-2.5 text-xs sm:text-sm">
-            <Sparkles className="w-4 h-4" /> Summer Camp
-          </TabsTrigger>
+          {summerCampEnabled && (
+            <TabsTrigger value="summer" className="flex-col sm:flex-row gap-1 py-2.5 text-xs sm:text-sm">
+              <Sparkles className="w-4 h-4" /> Summer Camp
+            </TabsTrigger>
+          )}
           <TabsTrigger value="receipt" className="flex-col sm:flex-row gap-1 py-2.5 text-xs sm:text-sm">
             <FileText className="w-4 h-4" /> Receipt
           </TabsTrigger>
-          <TabsTrigger value="certificate" className="flex-col sm:flex-row gap-1 py-2.5 text-xs sm:text-sm">
-            <Award className="w-4 h-4" /> Certificate
-          </TabsTrigger>
+          {summerCampEnabled && (
+            <TabsTrigger value="certificate" className="flex-col sm:flex-row gap-1 py-2.5 text-xs sm:text-sm">
+              <Award className="w-4 h-4" /> Certificate
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="monthly" className="mt-5"><MonthlyFeesTab /></TabsContent>
-        <TabsContent value="summer" className="mt-5"><SummerCampFees /></TabsContent>
+        {summerCampEnabled && <TabsContent value="summer" className="mt-5"><SummerCampFees /></TabsContent>}
         <TabsContent value="receipt" className="mt-5"><ReceiptGenerator /></TabsContent>
-        <TabsContent value="certificate" className="mt-5"><CertificateGenerator /></TabsContent>
+        {summerCampEnabled && <TabsContent value="certificate" className="mt-5"><CertificateGenerator /></TabsContent>}
       </Tabs>
     </div>
   );

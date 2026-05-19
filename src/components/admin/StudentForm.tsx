@@ -50,8 +50,9 @@ const CLASS_OPTIONS = [
 ];
 
 const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultStudentType }: StudentFormProps) => {
-  const { tenantId } = useAdmin();
-  const [packages, setPackages] = useState<PackageOption[]>([]);
+  const { tenantId, summerCampEnabled } = useAdmin();
+  const [allPackages, setAllPackages] = useState<PackageOption[]>([]);
+  const packages = summerCampEnabled ? allPackages : allPackages.filter(p => p.type !== 'summer_camp');
 
   useEffect(() => {
     if (!open || !tenantId) return;
@@ -63,7 +64,7 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
         .eq('status', 'active')
         .order('type', { ascending: true })
         .order('name', { ascending: true });
-      setPackages((data || []) as PackageOption[]);
+      setAllPackages((data || []) as PackageOption[]);
     })();
   }, [open, tenantId]);
 
@@ -170,10 +171,12 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
                 <RadioGroupItem value="regular" id="type-regular" />
                 <span className="text-sm">Regular Student</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <RadioGroupItem value="summer_camp" id="type-summer" />
-                <span className="text-sm">Summer Camp Student</span>
-              </label>
+              {summerCampEnabled && (
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <RadioGroupItem value="summer_camp" id="type-summer" />
+                  <span className="text-sm">Summer Camp Student</span>
+                </label>
+              )}
             </RadioGroup>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

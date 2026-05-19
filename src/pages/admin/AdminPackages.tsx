@@ -28,7 +28,7 @@ interface FormState {
 const emptyForm: FormState = { name: '', fee: '', description: '', status: 'active' };
 
 const AdminPackages = () => {
-  const { tenantId } = useAdmin();
+  const { tenantId, summerCampEnabled } = useAdmin();
   const [packages, setPackages] = useState<TenantPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<{ type: PackageType; pkg: TenantPackage | null } | null>(null);
@@ -178,7 +178,7 @@ const AdminPackages = () => {
       <h1 className="text-2xl font-bold text-foreground mb-6">Packages</h1>
 
       {renderSection('regular', 'Regular Tuition Packages')}
-      {renderSection('summer_camp', 'Summer Camp Packages')}
+      {summerCampEnabled && renderSection('summer_camp', 'Summer Camp Packages')}
 
       {/* Editor Modal */}
       {editing && (

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 
@@ -24,6 +25,7 @@ const PlatformTenantEdit = () => {
     email: '', mobile: '', address: '', city: '', state: '', pincode: '',
     institute_type: 'Tutorial',
   });
+  const [summerCampEnabled, setSummerCampEnabled] = useState(true);
   const [password, setPassword] = useState('');
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -45,6 +47,7 @@ const PlatformTenantEdit = () => {
           pincode: t.pincode || '',
           institute_type: t.institute_type || 'Tutorial',
         });
+        setSummerCampEnabled(t.summer_camp_enabled ?? true);
       }
       if (c) setCredId(c.id);
       setLoading(false);
@@ -85,7 +88,7 @@ const PlatformTenantEdit = () => {
 
     const { error } = await supabase
       .from('tenants_registry')
-      .update({ ...form, email })
+      .update({ ...form, email, summer_camp_enabled: summerCampEnabled })
       .eq('id', id);
     if (error) {
       setSubmitting(false);
@@ -173,6 +176,13 @@ const PlatformTenantEdit = () => {
                 <SelectItem value="School">School</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div>
+              <Label className="text-sm">Summer Camp Enabled</Label>
+              <p className="text-xs text-muted-foreground">Show Summer Camp packages, fees, attendance & dashboard for this tenant.</p>
+            </div>
+            <Switch checked={summerCampEnabled} onCheckedChange={setSummerCampEnabled} />
           </div>
           <div>
             <Label>New Password (optional)</Label>

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Copy, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -42,6 +43,7 @@ const PlatformTenantNew = () => {
     pincode: '',
     institute_type: 'Tutorial',
   });
+  const [summerCampEnabled, setSummerCampEnabled] = useState(true);
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -80,7 +82,7 @@ const PlatformTenantNew = () => {
 
     const { data: inserted, error } = await supabase
       .from('tenants_registry')
-      .insert({ ...form, email, tenant_id: tenantId })
+      .insert({ ...form, email, tenant_id: tenantId, summer_camp_enabled: summerCampEnabled })
       .select('id')
       .single();
 
@@ -197,6 +199,13 @@ const PlatformTenantNew = () => {
                 <SelectItem value="School">School</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div>
+              <Label className="text-sm">Summer Camp Enabled</Label>
+              <p className="text-xs text-muted-foreground">Show Summer Camp packages, fees, attendance & dashboard for this tenant.</p>
+            </div>
+            <Switch checked={summerCampEnabled} onCheckedChange={setSummerCampEnabled} />
           </div>
           <Button type="submit" disabled={submitting} className="w-full">
             {submitting ? 'Creating...' : 'Onboard Tenant'}
