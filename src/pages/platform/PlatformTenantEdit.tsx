@@ -88,7 +88,7 @@ const PlatformTenantEdit = () => {
 
     const { error } = await supabase
       .from('tenants_registry')
-      .update({ ...form, email })
+      .update({ ...form, email, summer_camp_enabled: summerCampEnabled })
       .eq('id', id);
     if (error) {
       setSubmitting(false);
