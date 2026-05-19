@@ -178,7 +178,7 @@ const AdminPackages = () => {
       <h1 className="text-2xl font-bold text-foreground mb-6">Packages</h1>
 
       {renderSection('regular', 'Regular Tuition Packages')}
-      {renderSection('summer_camp', 'Summer Camp Packages')}
+      {summerCampEnabled && renderSection('summer_camp', 'Summer Camp Packages')}
 
       {/* Editor Modal */}
       {editing && (
