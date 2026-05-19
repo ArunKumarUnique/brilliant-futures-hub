@@ -207,16 +207,18 @@ const AdminStudents = () => {
       </div>
 
       {/* Type Tabs */}
-      <Tabs value={typeTab} onValueChange={(v) => setTypeTab(v as StudentType)} className="mb-4">
-        <TabsList className="w-full grid grid-cols-2 h-auto">
-          <TabsTrigger value="regular" className="gap-1.5 py-2.5 text-xs sm:text-sm">
-            <Users className="w-4 h-4" /> Regular Students ({regularCount})
-          </TabsTrigger>
-          <TabsTrigger value="summer_camp" className="gap-1.5 py-2.5 text-xs sm:text-sm">
-            <Sparkles className="w-4 h-4" /> Summer Camp ({summerCount})
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {summerCampEnabled && (
+        <Tabs value={typeTab} onValueChange={(v) => setTypeTab(v as StudentType)} className="mb-4">
+          <TabsList className="w-full grid grid-cols-2 h-auto">
+            <TabsTrigger value="regular" className="gap-1.5 py-2.5 text-xs sm:text-sm">
+              <Users className="w-4 h-4" /> Regular Students ({regularCount})
+            </TabsTrigger>
+            <TabsTrigger value="summer_camp" className="gap-1.5 py-2.5 text-xs sm:text-sm">
+              <Sparkles className="w-4 h-4" /> Summer Camp ({summerCount})
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-5">
