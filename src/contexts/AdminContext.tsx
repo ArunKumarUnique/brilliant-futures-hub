@@ -1,14 +1,16 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AdminContextType {
   isAuthenticated: boolean;
   tenantId: string | null;
   tenantName: string | null;
+  tenantLogo: string | null;
   adminEmail: string | null;
   summerCampEnabled: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  refreshTenantProfile: () => Promise<void>;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -19,6 +21,7 @@ interface AdminSession {
   tenantName: string;
   source: 'config' | 'platform';
   summerCampEnabled?: boolean;
+  tenantLogo?: string | null;
 }
 
 const STORAGE_KEY = 'tenant_admin_session';
@@ -47,20 +50,27 @@ export const AdminProvider: React.FC<{ children: ReactNode; adminEmail: string; 
     sessionStorage.setItem('admin_authenticated', 'true');
   };
 
-  // Keep summer_camp_enabled fresh from DB whenever the session's tenant changes
+  const refreshTenantProfile = useCallback(async () => {
+    if (!session?.tenantId) return;
+    const { data } = await supabase
+      .from('tenants_registry')
+      .select('institute_name, logo_url, summer_camp_enabled')
+      .eq('tenant_id', session.tenantId)
+      .maybeSingle();
+    if (!data) return;
+    setAdminSession({
+      ...session,
+      tenantName: data.institute_name || session.tenantName,
+      tenantLogo: data.logo_url || null,
+      summerCampEnabled: data.summer_camp_enabled ?? true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.tenantId]);
+
+  // Hydrate name/logo/summer flag from DB whenever the session's tenant changes
   useEffect(() => {
     if (!session?.tenantId) return;
-    (async () => {
-      const { data } = await supabase
-        .from('tenants_registry')
-        .select('summer_camp_enabled')
-        .eq('tenant_id', session.tenantId)
-        .maybeSingle();
-      const enabled = data?.summer_camp_enabled ?? true;
-      if (enabled !== session.summerCampEnabled) {
-        setAdminSession({ ...session, summerCampEnabled: enabled });
-      }
-    })();
+    refreshTenantProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.tenantId]);
 
@@ -71,15 +81,16 @@ export const AdminProvider: React.FC<{ children: ReactNode; adminEmail: string; 
     if (trimmedEmail === adminEmail.trim().toLowerCase() && password === adminPassword) {
       const { data: t } = await supabase
         .from('tenants_registry')
-        .select('summer_camp_enabled')
+        .select('summer_camp_enabled, logo_url, institute_name')
         .eq('tenant_id', defaultTenantId)
         .maybeSingle();
       setAdminSession({
         email: trimmedEmail,
         tenantId: defaultTenantId,
-        tenantName: defaultTenantName,
+        tenantName: t?.institute_name || defaultTenantName,
         source: 'config',
         summerCampEnabled: t?.summer_camp_enabled ?? true,
+        tenantLogo: t?.logo_url || null,
       });
       return true;
     }
@@ -94,7 +105,7 @@ export const AdminProvider: React.FC<{ children: ReactNode; adminEmail: string; 
       if (data && data.temp_password === password) {
         const { data: t } = await supabase
           .from('tenants_registry')
-          .select('status, tenant_id, institute_name, summer_camp_enabled')
+          .select('status, tenant_id, institute_name, summer_camp_enabled, logo_url')
           .eq('id', data.tenant_registry_id)
           .maybeSingle();
         if (t && t.status === 'active' && t.tenant_id) {
@@ -104,6 +115,7 @@ export const AdminProvider: React.FC<{ children: ReactNode; adminEmail: string; 
             tenantName: t.institute_name || t.tenant_id,
             source: 'platform',
             summerCampEnabled: t.summer_camp_enabled ?? true,
+            tenantLogo: t.logo_url || null,
           });
           return true;
         }
@@ -125,10 +137,12 @@ export const AdminProvider: React.FC<{ children: ReactNode; adminEmail: string; 
       isAuthenticated: !!session?.tenantId,
       tenantId: session?.tenantId || null,
       tenantName: session?.tenantName || null,
+      tenantLogo: session?.tenantLogo || null,
       adminEmail: session?.email || null,
       summerCampEnabled: session?.summerCampEnabled ?? true,
       login,
       logout,
+      refreshTenantProfile,
     }}>
       {children}
     </AdminContext.Provider>
