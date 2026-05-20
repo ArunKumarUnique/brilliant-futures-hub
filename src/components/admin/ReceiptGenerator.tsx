@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import usePackages from '@/hooks/usePackages';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -36,7 +37,8 @@ const ReceiptGenerator = () => {
   const { config, tr } = useTenant();
   const { tenantId, summerCampEnabled } = useAdmin();
   const { language } = useLanguage();
-  const packages = (config.packages?.items || []).filter(p => summerCampEnabled || p.id !== 'summer-camp');
+  const { packages: allPackages = [] } = usePackages(tenantId || null, { status: 'active' });
+  const packages = summerCampEnabled ? allPackages : allPackages.filter(p => p.type !== 'summer_camp');
 
   const [students, setStudents] = useState<Student[]>([]);
   const [studentId, setStudentId] = useState('');
@@ -66,8 +68,12 @@ const ReceiptGenerator = () => {
   }, [tenantId]);
 
   const selectedStudent = useMemo(() => students.find(s => s.id === studentId), [students, studentId]);
-  const selectedPackage = useMemo(() => packages.find(p => p.id === packageId), [packages, packageId]);
-  const isSummerCamp = packageId === 'summer-camp';
+  const selectedPackage = useMemo(() => allPackages.find(p => p.id === packageId), [allPackages, packageId]);
+  const isSummerCamp = selectedPackage?.type === 'summer_camp';
+
+  if (!tenantId) {
+    return <div className="text-center text-muted-foreground py-8">Tenant not initialized.</div>;
+  }
 
   // Filter students by selected package type so the wrong cohort never appears
   const filteredStudents = useMemo(() => {
@@ -115,10 +121,16 @@ const ReceiptGenerator = () => {
   }, [studentId, packageId, month, year, isSummerCamp, tenantId]);
 
   const generate = async () => {
-    if (!selectedStudent || !selectedPackage) {
+      if (!selectedStudent || !selectedPackage) {
       toast({ title: 'Select student & package', variant: 'destructive' });
       return;
     }
+      // Validate package type vs student type
+      const pkgType = selectedPackage?.type;
+      if (pkgType && pkgType !== selectedStudent.student_type) {
+        toast({ title: 'Package / Student mismatch', description: 'Selected package does not belong to the student type', variant: 'destructive' });
+        return;
+      }
     if (!tenantId) {
       toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
       return;
@@ -141,7 +153,7 @@ const ReceiptGenerator = () => {
           .from('summer_camp_payments')
           .select('amount, paid_date, payment_method')
           .eq('tenant_id', tenantId).eq('student_id', studentId).maybeSingle();
-        amount = data?.amount ? Number(data.amount) : (selectedPackage.flatFee ?? 1500);
+        amount = data?.amount ? Number(data.amount) : (selectedPackage?.fee ?? 0);
         paidDate = data?.paid_date || paidDate;
         paymentMethod = data?.payment_method || paymentMethod;
       } else {
@@ -149,13 +161,15 @@ const ReceiptGenerator = () => {
           .from('fee_records')
           .select('amount, paid_date, payment_method')
           .eq('tenant_id', tenantId).eq('student_id', studentId).eq('month', Number(month)).eq('year', Number(year)).maybeSingle();
-        amount = data?.amount ? Number(data.amount) : selectedStudent.monthly_fee;
+        amount = data?.amount ? Number(data.amount) : (selectedPackage?.fee ?? selectedStudent.monthly_fee);
         paidDate = data?.paid_date || paidDate;
         paymentMethod = data?.payment_method || paymentMethod;
         monthLabel = `${MONTHS[Number(month) - 1]} ${year}`;
       }
 
-      const packageName = typeof selectedPackage.title === 'string' ? selectedPackage.title : tr(selectedPackage.title, language);
+      const packageName = selectedPackage
+        ? (typeof selectedPackage.name === 'string' ? selectedPackage.name : tr(selectedPackage.name, language))
+        : 'Package';
       const receiptNo = generateReceiptNo(tenantId);
 
       const data: ReceiptData = {

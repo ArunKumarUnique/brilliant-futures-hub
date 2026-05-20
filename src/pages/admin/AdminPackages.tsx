@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { invalidatePackages } from '@/hooks/usePackages';
 import { useAdmin } from '@/contexts/AdminContext';
 import { toast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2, Eye, X } from 'lucide-react';
@@ -30,6 +31,7 @@ const emptyForm: FormState = { name: '', fee: '', description: '', status: 'acti
 const AdminPackages = () => {
   const { tenantId, summerCampEnabled } = useAdmin();
   const [packages, setPackages] = useState<TenantPackage[]>([]);
+  const [studentCounts, setStudentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<{ type: PackageType; pkg: TenantPackage | null } | null>(null);
   const [viewing, setViewing] = useState<TenantPackage | null>(null);
@@ -52,7 +54,27 @@ const AdminPackages = () => {
     setLoading(false);
   };
 
+  const loadStudentCounts = async () => {
+    if (!tenantId) return;
+    const { data, error } = await supabase
+      .from('students')
+      .select('package_id')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'active');
+    if (error) {
+      toast({ title: 'Failed to load student counts', description: error.message, variant: 'destructive' });
+      return;
+    }
+    const counts = (data || []).reduce((acc: Record<string, number>, row: { package_id: string | null }) => {
+      if (!row.package_id) return acc;
+      acc[row.package_id] = (acc[row.package_id] || 0) + 1;
+      return acc;
+    }, {});
+    setStudentCounts(counts);
+  };
+
   useEffect(() => { load(); }, [tenantId]);
+  useEffect(() => { loadStudentCounts(); }, [tenantId]);
 
   const openCreate = (type: PackageType) => {
     setForm(emptyForm);
@@ -101,6 +123,8 @@ const AdminPackages = () => {
     }
     toast({ title: editing.pkg ? 'Package updated' : 'Package created' });
     closeEditor();
+    // Invalidate package cache so other components refresh
+    invalidatePackages(tenantId || undefined);
     load();
   };
 
@@ -109,6 +133,7 @@ const AdminPackages = () => {
     const { error } = await supabase.from('tenant_packages').delete().eq('id', pkg.id);
     if (error) return toast({ title: 'Delete failed', description: error.message, variant: 'destructive' });
     toast({ title: 'Package deleted' });
+    invalidatePackages(tenantId || undefined);
     load();
   };
 
@@ -147,6 +172,7 @@ const AdminPackages = () => {
                   </span>
                 </div>
                 <p className="text-2xl font-bold text-primary mb-1">₹{Number(pkg.fee).toLocaleString('en-IN')}</p>
+                <p className="text-sm text-muted-foreground mb-3">Students enrolled: {studentCounts[pkg.id] ?? 0}</p>
                 {pkg.description && (
                   <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{pkg.description}</p>
                 )}

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import usePackages from '@/hooks/usePackages';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -41,7 +42,9 @@ const AdminStudents = () => {
   const { config, tr } = useTenant();
   const { tenantId, summerCampEnabled } = useAdmin();
   const { language } = useLanguage();
-  const packages = config.packages?.items || [];
+  const { packages: allPackages } = usePackages(tenantId || null, { status: 'active' });
+  const regularPackages = allPackages.filter(p => p.type === 'regular');
+  const summerPackages = allPackages.filter(p => p.type === 'summer_camp');
 
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
@@ -168,9 +171,8 @@ const AdminStudents = () => {
   };
 
   const getPackageName = (id: string) => {
-    const pkg = packages.find(p => p.id === id);
-    if (!pkg) return id;
-    return typeof pkg.title === 'string' ? pkg.title : tr(pkg.title, language);
+    const dbPkg = allPackages.find(p => p.id === id);
+    return dbPkg ? dbPkg.name : id;
   };
 
   const filtered = useMemo(() => {
@@ -243,11 +245,13 @@ const AdminStudents = () => {
           <SelectTrigger className="w-[200px]"><SelectValue placeholder="All Packages" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Packages</SelectItem>
-            {packages.map(p => (
-              <SelectItem key={p.id} value={p.id}>
-                {typeof p.title === 'string' ? p.title : tr(p.title, language)}
-              </SelectItem>
+            {typeTab === 'regular' && regularPackages.map(p => (
+              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
             ))}
+            {typeTab === 'summer_camp' && summerPackages.map(p => (
+              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+            ))}
+            {/* No fallback packages when tenant has no DB packages */}
           </SelectContent>
         </Select>
       </div>

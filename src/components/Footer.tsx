@@ -76,7 +76,7 @@ const Footer = () => {
                   onClick={() => setLanguage(lang)}
                   className={`px-3 py-1 text-sm transition-colors ${language === lang ? 'bg-primary text-primary-foreground' : 'text-primary-foreground/60 hover:text-primary-foreground'}`}
                 >
-                  {config.languages.labels[lang]}
+                  {config.languages.labels?.[lang] || lang}
                 </button>
               ))}
             </div>

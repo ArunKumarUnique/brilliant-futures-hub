@@ -25,9 +25,12 @@ const CertificateGenerator = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [studentId, setStudentId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [signatory, setSignatory] = useState(config.faculty?.[0]
-    ? (typeof config.faculty[0].name === 'string' ? config.faculty[0].name : (config.faculty[0].name as any).en || '')
-    : '');
+  const [signatory, setSignatory] = useState(() => {
+    const facultyMember = config.faculty?.[0];
+    if (!facultyMember) return '';
+    if (typeof facultyMember.name === 'string') return facultyMember.name;
+    return (facultyMember.name as any)?.en || Object.values(facultyMember.name)[0] || '';
+  });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
 

@@ -18,6 +18,7 @@ export const isTenantValid = (): boolean => !!tenantConfig;
 
 export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const config = tenantConfig!;
+  const defaultLanguage = config?.languages?.default || 'en';
 
   useEffect(() => {
     if (config) applyTheme(config.theme);
@@ -25,9 +26,10 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   useSEO(config?.seo ?? { title: '', description: '', keywords: '', ogTitle: '', ogDescription: '' });
 
-  const tr = (value: Translatable, language: string): string => {
+  const tr = (value: Translatable, language: string = defaultLanguage): string => {
     if (typeof value === 'string') return value;
-    return value[language] || value[Object.keys(value)[0]] || '';
+    if (!value || typeof value !== 'object') return '';
+    return value[language] || value[defaultLanguage] || value[Object.keys(value)[0]] || '';
   };
 
   if (!tenantConfig) {

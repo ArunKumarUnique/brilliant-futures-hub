@@ -1,6 +1,7 @@
 import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useTenant } from '@/contexts/TenantContext';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { LayoutDashboard, Users, Package, Receipt, Bell, LogOut, PanelLeftClose, PanelLeft, FileImage, ClipboardCheck, BookOpen, Calendar, Lightbulb, MessageSquareText } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -103,7 +104,9 @@ const AdminLayout = () => {
           <span className="font-semibold text-foreground text-sm">Admin</span>
         </header>
         <main className="p-4 overflow-auto">
+          <ErrorBoundary>
           <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     );
@@ -122,7 +125,9 @@ const AdminLayout = () => {
           </button>
         </header>
         <main className="flex-1 p-6 overflow-auto">
+          <ErrorBoundary>
           <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

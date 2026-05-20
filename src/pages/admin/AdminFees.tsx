@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useTenant } from '@/contexts/TenantContext';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import usePackages from '@/hooks/usePackages';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,7 @@ import FeeTracker from '@/components/admin/FeeTracker';
 import SummerCampFees from '@/components/admin/SummerCampFees';
 import ReceiptGenerator from '@/components/admin/ReceiptGenerator';
 import CertificateGenerator from '@/components/admin/CertificateGenerator';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { Receipt, Sparkles, FileText, Award } from 'lucide-react';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -28,10 +29,10 @@ interface StudentWithFee {
 }
 
 const MonthlyFeesTab = () => {
-  const { config, tr } = useTenant();
   const { tenantId } = useAdmin();
   const { language } = useLanguage();
-  const packages = config.packages?.items || [];
+  const { packages: allPackages } = usePackages(tenantId || null, { status: 'active' });
+  const packages = allPackages;
 
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
@@ -95,20 +96,21 @@ const MonthlyFeesTab = () => {
   useEffect(() => { fetchStudentsWithFees(); }, [tenantId, month, year, statusFilter]);
 
   const getPackageName = (id: string) => {
-    const pkg = packages.find(p => p.id === id);
-    if (!pkg) return id;
-    return typeof pkg.title === 'string' ? pkg.title : tr(pkg.title, language);
+    const dbPkg = packages.find((p: any) => p.id === id);
+    return dbPkg ? dbPkg.name : 'Unknown package';
   };
 
   if (viewingFees) {
     return (
-      <FeeTracker
+      <ErrorBoundary>
+        <FeeTracker
         studentId={viewingFees.id}
         studentName={viewingFees.student_name}
         monthlyFee={viewingFees.monthly_fee}
         year={Number(year)}
         onBack={() => { setViewingFees(null); fetchStudentsWithFees(); }}
-      />
+        />
+      </ErrorBoundary>
     );
   }
 
@@ -212,7 +214,11 @@ const AdminFees = () => {
 
         <TabsContent value="monthly" className="mt-5"><MonthlyFeesTab /></TabsContent>
         {summerCampEnabled && <TabsContent value="summer" className="mt-5"><SummerCampFees /></TabsContent>}
-        <TabsContent value="receipt" className="mt-5"><ReceiptGenerator /></TabsContent>
+        <TabsContent value="receipt" className="mt-5">
+          <ErrorBoundary>
+            <ReceiptGenerator />
+          </ErrorBoundary>
+        </TabsContent>
         {summerCampEnabled && <TabsContent value="certificate" className="mt-5"><CertificateGenerator /></TabsContent>}
       </Tabs>
     </div>

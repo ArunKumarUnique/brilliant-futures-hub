@@ -13,13 +13,14 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { config, tr: tenantTr } = useTenant();
-  const [language, setLanguage] = useState(config.languages.default);
+  const defaultLanguage = config?.languages?.default || 'en';
+  const [language, setLanguage] = useState(defaultLanguage);
 
   const t = (key: string): string => {
-    const value = config.translations[key];
+    const value = config.translations?.[key];
     if (!value) return key;
     if (typeof value === 'string') return value;
-    return value[language] || value[Object.keys(value)[0]] || key;
+    return value[language] || value[defaultLanguage] || value[Object.keys(value)[0]] || key;
   };
 
   const tr = (value: Translatable): string => {

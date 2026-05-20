@@ -72,7 +72,7 @@ const Header = () => {
                     onClick={() => setLanguage(lang)}
                     className={`lang-toggle ${language === lang ? 'lang-toggle-active' : 'lang-toggle-inactive'}`}
                   >
-                    {config.languages.labels[lang]}
+                    {config.languages.labels?.[lang] || lang}
                   </button>
                 ))}
               </div>

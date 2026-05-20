@@ -452,6 +452,7 @@ export type Database = {
           address: string
           city: string
           created_at: string
+          updated_at?: string | null
           email: string
           id: string
           institute_name: string
@@ -470,6 +471,7 @@ export type Database = {
           address: string
           city: string
           created_at?: string
+          updated_at?: string | null
           email: string
           id?: string
           institute_name: string
@@ -488,6 +490,7 @@ export type Database = {
           address?: string
           city?: string
           created_at?: string
+          updated_at?: string | null
           email?: string
           id?: string
           institute_name?: string

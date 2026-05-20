@@ -1,197 +1,149 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Eye, Power, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { Users, LayoutDashboard, Package, Sparkles } from 'lucide-react';
 
-interface Tenant {
-  id: string;
-  tenant_id: string;
-  institute_name: string;
-  owner_first_name: string;
-  owner_last_name: string;
-  email: string;
-  mobile: string;
-  institute_type: string | null;
-  status: string;
-  created_at: string;
-}
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(value);
 
-const fmtDate = (s: string) => {
-  try { return new Date(s).toLocaleDateString(); } catch { return '—'; }
+const fmtDate = (s?: string | null) => {
+  if (!s) return '—';
+  try {
+    return new Date(s).toLocaleDateString();
+  } catch {
+    return '—';
+  }
 };
 
+const StatsCard = ({ label, value, icon }: { label: string; value: string | number; icon: React.ReactNode }) => (
+  <Card className="rounded-3xl border border-border p-5 shadow-sm">
+    <div className="flex items-start justify-between gap-4">
+      <div className="space-y-2">
+        <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
+        <p className="text-3xl font-bold">{value}</p>
+      </div>
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+        {icon}
+      </div>
+    </div>
+  </Card>
+);
+
 const PlatformDashboard = () => {
-  const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<Tenant | null>(null);
+  const [stats, setStats] = useState({
+    tenants: 0,
+    students: 0,
+    activePackages: 0,
+    summerStudents: 0,
+    feesThisMonth: 0,
+  });
+  const [recentTenants, setRecentTenants] = useState<any[]>([]);
+  const [recentStudents, setRecentStudents] = useState<any[]>([]);
   const { toast } = useToast();
 
-  const load = async () => {
+  const loadDashboard = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('tenants_registry')
-      .select('id, tenant_id, institute_name, owner_first_name, owner_last_name, email, mobile, institute_type, status, created_at')
-      .neq('status', 'deleted')
-      .order('created_at', { ascending: false });
-    if (error) {
-      toast({ title: 'Failed to load tenants', description: error.message, variant: 'destructive' });
-    } else {
-      setTenants((data as Tenant[]) || []);
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+
+    const [tenantCountRes, studentCountRes, packageCountRes, summerStudentCountRes, feeRecordsRes, tenantsRes, studentsRes] =
+      await Promise.all([
+        supabase.from('tenants_registry').select('id', { count: 'exact', head: true }).neq('status', 'deleted'),
+        supabase.from('students').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+        supabase.from('tenant_packages').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+        supabase.from('students').select('id', { count: 'exact', head: true }).eq('status', 'active').eq('student_type', 'summer_camp'),
+        supabase.from('fee_records').select('amount').eq('status', 'paid').eq('month', currentMonth).eq('year', currentYear),
+        supabase.from('tenants_registry').select('id, institute_name, email, status, created_at').neq('status', 'deleted').order('created_at', { ascending: false }).limit(4),
+        supabase.from('students').select('id, student_name, tenant_id, class, student_type').eq('status', 'active').order('admission_date', { ascending: false }).limit(4),
+      ]);
+
+    if (tenantCountRes.error || studentCountRes.error || packageCountRes.error || summerStudentCountRes.error || feeRecordsRes.error || tenantsRes.error || studentsRes.error) {
+      const message = tenantCountRes.error?.message || studentCountRes.error?.message || packageCountRes.error?.message || summerStudentCountRes.error?.message || feeRecordsRes.error?.message || tenantsRes.error?.message || studentsRes.error?.message;
+      toast({ title: 'Failed to load dashboard', description: message, variant: 'destructive' });
+      setLoading(false);
+      return;
     }
+
+    const feesThisMonth = (feeRecordsRes.data || []).reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    setStats({
+      tenants: tenantCountRes.count ?? 0,
+      students: studentCountRes.count ?? 0,
+      activePackages: packageCountRes.count ?? 0,
+      summerStudents: summerStudentCountRes.count ?? 0,
+      feesThisMonth,
+    });
+    setRecentTenants(tenantsRes.data || []);
+    setRecentStudents(studentsRes.data || []);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
-
-  const toggleStatus = async (t: Tenant) => {
-    const newStatus = t.status === 'active' ? 'disabled' : 'active';
-    const { error } = await supabase.from('tenants_registry').update({ status: newStatus }).eq('id', t.id);
-    if (error) {
-      toast({ title: 'Update failed', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: `Tenant ${newStatus === 'active' ? 'enabled' : 'disabled'}` });
-      load();
-    }
-  };
-
-  const confirmDelete = async () => {
-    if (!deleteTarget) return;
-    const { error } = await supabase.from('tenants_registry').update({ status: 'deleted' }).eq('id', deleteTarget.id);
-    if (error) {
-      toast({ title: 'Delete failed', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'Tenant deleted' });
-      setDeleteTarget(null);
-      load();
-    }
-  };
+  useEffect(() => {
+    loadDashboard();
+  }, []);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">Tenants</h1>
-          <p className="text-sm text-muted-foreground">Total: {tenants.length}</p>
-        </div>
-        <Link to="/platform-admin/tenants/new">
-          <Button className="w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-1" /> Add Tenant
-          </Button>
-        </Link>
+    <div className="space-y-5">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatsCard label="Total Tenants" value={stats.tenants} icon={<Users className="h-6 w-6" />} />
+        <StatsCard label="Total Students" value={stats.students} icon={<LayoutDashboard className="h-6 w-6" />} />
+        <StatsCard label="Active Packages" value={stats.activePackages} icon={<Package className="h-6 w-6" />} />
+        <StatsCard label="Summer Camp Students" value={stats.summerStudents} icon={<Sparkles className="h-6 w-6" />} />
       </div>
 
-      <Card className="overflow-hidden">
-        {loading ? (
-          <div className="p-6 text-center text-muted-foreground">Loading...</div>
-        ) : tenants.length === 0 ? (
-          <div className="p-6 text-center text-muted-foreground">No tenants yet. Click "Add Tenant" to onboard one.</div>
-        ) : (
-          <>
-            {/* Mobile cards */}
-            <div className="sm:hidden divide-y">
-              {tenants.map((t) => (
-                <div key={t.id} className="p-4 space-y-2">
-                  <div className="flex justify-between items-start gap-2">
-                    <div className="min-w-0">
-                      <div className="font-semibold truncate">{t.institute_name}</div>
-                      <div className="text-xs text-muted-foreground truncate">{t.email}</div>
-                    </div>
-                    <Badge variant={t.status === 'active' ? 'default' : 'secondary'}>{t.status}</Badge>
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {t.owner_first_name} {t.owner_last_name} · {t.mobile}
-                  </div>
-                  <div className="text-xs text-muted-foreground">Created {fmtDate(t.created_at)}</div>
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    <Link to={`/platform-admin/tenants/${t.id}`}>
-                      <Button variant="outline" size="sm" className="w-full"><Eye className="h-4 w-4 mr-1" /> View</Button>
-                    </Link>
-                    <Link to={`/platform-admin/tenants/${t.id}/edit`}>
-                      <Button variant="outline" size="sm" className="w-full"><Pencil className="h-4 w-4 mr-1" /> Edit</Button>
-                    </Link>
-                    <Button variant="outline" size="sm" onClick={() => toggleStatus(t)}>
-                      <Power className="h-4 w-4 mr-1" /> {t.status === 'active' ? 'Disable' : 'Enable'}
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => setDeleteTarget(t)} className="text-destructive">
-                      <Trash2 className="h-4 w-4 mr-1" /> Delete
-                    </Button>
-                  </div>
-                </div>
-              ))}
+      <div className="grid gap-3 lg:grid-cols-[1.5fr_1fr]">
+        <Card className="rounded-3xl border border-border p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold">Fees Collected This Month</h2>
+              <p className="text-sm text-muted-foreground">Paid fee records for the current month.</p>
             </div>
-            {/* Desktop table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted">
-                  <tr>
-                    <th className="text-left p-3">Institute</th>
-                    <th className="text-left p-3">Owner</th>
-                    <th className="text-left p-3">Email</th>
-                    <th className="text-left p-3">Mobile</th>
-                    <th className="text-left p-3">Status</th>
-                    <th className="text-left p-3">Created</th>
-                    <th className="text-right p-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tenants.map((t) => (
-                    <tr key={t.id} className="border-t">
-                      <td className="p-3 font-medium">{t.institute_name}</td>
-                      <td className="p-3">{t.owner_first_name} {t.owner_last_name}</td>
-                      <td className="p-3">{t.email}</td>
-                      <td className="p-3">{t.mobile}</td>
-                      <td className="p-3">
-                        <Badge variant={t.status === 'active' ? 'default' : 'secondary'}>{t.status}</Badge>
-                      </td>
-                      <td className="p-3">{fmtDate(t.created_at)}</td>
-                      <td className="p-3 text-right space-x-1">
-                        <Link to={`/platform-admin/tenants/${t.id}`}>
-                          <Button variant="outline" size="sm" title="View"><Eye className="h-4 w-4" /></Button>
-                        </Link>
-                        <Link to={`/platform-admin/tenants/${t.id}/edit`}>
-                          <Button variant="outline" size="sm" title="Edit"><Pencil className="h-4 w-4" /></Button>
-                        </Link>
-                        <Button variant="outline" size="sm" onClick={() => toggleStatus(t)} title={t.status === 'active' ? 'Disable' : 'Enable'}>
-                          <Power className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setDeleteTarget(t)} title="Delete" className="text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
-      </Card>
+            <div className="rounded-2xl bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">{formatCurrency(stats.feesThisMonth)}</div>
+          </div>
+        </Card>
 
-      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete tenant?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete <span className="font-medium">{deleteTarget?.institute_name}</span>?
-              The tenant will be marked as deleted and hidden from the list.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        <Card className="rounded-3xl border border-border p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">Recently Added Tenants</h2>
+          <div className="mt-4 space-y-3">
+            {(recentTenants.length === 0 ? Array.from({ length: 2 }) : recentTenants).map((tenant, idx) => (
+              <div key={tenant?.id ?? idx} className="flex flex-col gap-1 rounded-2xl border border-border bg-background p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-medium">{tenant?.institute_name ?? 'No tenant yet'}</p>
+                    <p className="text-xs text-muted-foreground">{tenant?.email}</p>
+                  </div>
+                  <Badge variant={tenant?.status === 'active' ? 'default' : 'secondary'}>
+                    {tenant?.status ?? '—'}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">Created {fmtDate(tenant?.created_at)}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <Card className="rounded-3xl border border-border p-5 shadow-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Recent Students</h2>
+            <p className="text-sm text-muted-foreground">Latest active student records added across tenants.</p>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {recentStudents.length > 0 ? recentStudents.map((student) => (
+            <div key={student.id} className="rounded-2xl border border-border bg-background p-4">
+              <p className="font-medium">{student.student_name}</p>
+              <p className="text-sm text-muted-foreground">{student.class} • {student.student_type === 'summer_camp' ? 'Summer Camp' : 'Regular'}</p>
+              <p className="text-sm text-muted-foreground mt-2">Tenant: {student.tenant_id}</p>
+            </div>
+          )) : (
+            <div className="rounded-2xl border border-border bg-background p-4 text-sm text-muted-foreground">No recent students yet.</div>
+          )}
+        </div>
+      </Card>
     </div>
   );
 };

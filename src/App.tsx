@@ -14,6 +14,7 @@ import PlatformDashboard from "@/pages/platform/PlatformDashboard";
 import PlatformTenantNew from "@/pages/platform/PlatformTenantNew";
 import PlatformTenantView from "@/pages/platform/PlatformTenantView";
 import PlatformTenantEdit from "@/pages/platform/PlatformTenantEdit";
+import PlatformTenants from '@/pages/platform/PlatformTenants';
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const PlatformRoutes = () => (
         <Route path="/platform-admin" element={<PlatformLogin />} />
         <Route path="/platform-admin" element={<PlatformLayout />}>
           <Route path="dashboard" element={<PlatformDashboard />} />
+          <Route path="tenants" element={<PlatformTenants />} />
           <Route path="tenants/new" element={<PlatformTenantNew />} />
           <Route path="tenants/:id" element={<PlatformTenantView />} />
           <Route path="tenants/:id/edit" element={<PlatformTenantEdit />} />

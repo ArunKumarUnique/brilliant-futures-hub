@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useTenant } from '@/contexts/TenantContext';
 import { useAdmin } from '@/contexts/AdminContext';
+import usePackages from '@/hooks/usePackages';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -27,13 +27,13 @@ interface Row {
   amount: number;
 }
 
-const SUMMER_CAMP_FEE_DEFAULT = 1500;
+// No fallback package fee default: use actual DB package fee only
 
 const SummerCampFees = () => {
-  const { config } = useTenant();
   const { tenantId } = useAdmin();
-  const summerPkg = config.packages?.items.find(p => p.id === 'summer-camp');
-  const defaultFee = summerPkg?.flatFee ?? SUMMER_CAMP_FEE_DEFAULT;
+  const { packages: allPackages } = usePackages(tenantId || null, { status: 'active' });
+  const dbSummerPkg = allPackages.find(p => p.type === 'summer_camp');
+  const defaultFee = dbSummerPkg?.fee ?? 0;
 
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +47,7 @@ const SummerCampFees = () => {
 
   const [paidDate, setPaidDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentMethod, setPaymentMethod] = useState('cash');
-  const [amountPaid, setAmountPaid] = useState<string>(String(defaultFee));
+  const [amountPaid, setAmountPaid] = useState<string>(defaultFee ? String(defaultFee) : '');
 
   const fetchRows = async () => {
     if (!tenantId) {
@@ -295,7 +295,7 @@ const SummerCampFees = () => {
                       <Undo2 className="w-3 h-3 mr-1" /> Revert
                     </Button>
                   ) : (
-                    <Button size="sm" variant="outline" onClick={() => { setMarkStudent(r); setPaidDate(new Date().toISOString().split('T')[0]); setAmountPaid(String(defaultFee)); }}>
+                      <Button size="sm" variant="outline" onClick={() => { setMarkStudent(r); setPaidDate(new Date().toISOString().split('T')[0]); setAmountPaid(defaultFee ? String(defaultFee) : ''); }}>
                       <Check className="w-3 h-3 mr-1" /> Mark Paid
                     </Button>
                   )}
@@ -330,7 +330,7 @@ const SummerCampFees = () => {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Amount Paid (₹) *</Label>
+                <Label>Amount Paid (₹) *</Label>
               <Input
                 type="number"
                 inputMode="numeric"
@@ -340,7 +340,9 @@ const SummerCampFees = () => {
                 onChange={e => setAmountPaid(e.target.value)}
                 placeholder={String(defaultFee)}
               />
-              <p className="text-xs text-muted-foreground">Default: ₹{defaultFee.toLocaleString('en-IN')} • Edit for partial payments</p>
+              <p className="text-xs text-muted-foreground">
+                Default: ₹{defaultFee.toLocaleString('en-IN')} • Edit for partial payments
+              </p>
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setMarkStudent(null)}>Cancel</Button>
