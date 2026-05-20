@@ -64,6 +64,7 @@ const AppRoutes = () => {
           <Route path="timetable" element={<AdminTimetable />} />
           <Route path="daily-learnings" element={<AdminDailyLearnings />} />
           <Route path="messages" element={<AdminMessageGenerator />} />
+          <Route path="profile" element={<AdminProfile />} />
           <Route path="brochure-builder" element={<BrochureBuilder />} />
         </Route>
 
