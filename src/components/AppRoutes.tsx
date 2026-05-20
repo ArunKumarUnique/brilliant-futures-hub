@@ -24,6 +24,7 @@ import AdminHomework from '@/pages/admin/AdminHomework';
 import AdminTimetable from '@/pages/admin/AdminTimetable';
 import AdminDailyLearnings from '@/pages/admin/AdminDailyLearnings';
 import AdminMessageGenerator from '@/pages/admin/AdminMessageGenerator';
+import AdminProfile from '@/pages/admin/AdminProfile';
 
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen flex flex-col">
