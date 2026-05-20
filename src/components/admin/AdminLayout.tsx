@@ -2,7 +2,7 @@ import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useTenant } from '@/contexts/TenantContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { LayoutDashboard, Users, Package, Receipt, Bell, LogOut, PanelLeftClose, PanelLeft, FileImage, ClipboardCheck, BookOpen, Calendar, Lightbulb, MessageSquareText } from 'lucide-react';
+import { LayoutDashboard, Users, Package, Receipt, Bell, LogOut, PanelLeftClose, PanelLeft, FileImage, ClipboardCheck, BookOpen, Calendar, Lightbulb, MessageSquareText, GraduationCap, UserCog } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -19,28 +19,46 @@ const navItems = [
   { label: 'Fee Tracking', icon: Receipt, path: '/admin/fees' },
   { label: 'Notifications', icon: Bell, path: '/admin/notifications' },
   { label: 'Brochure Builder', icon: FileImage, path: '/admin/brochure-builder' },
+  { label: 'Profile', icon: UserCog, path: '/admin/profile' },
 ];
 
+const TenantBadge = ({ logo, name, size = 'sm' }: { logo: string | null; name: string; size?: 'sm' | 'md' }) => {
+  const dim = size === 'md' ? 'w-8 h-8 text-sm' : 'w-7 h-7 text-xs';
+  const initial = (name || 'T').trim().charAt(0).toUpperCase();
+  return (
+    <div className={`${dim} rounded-md border border-border bg-muted flex items-center justify-center overflow-hidden shrink-0`}>
+      {logo ? (
+        <img src={logo} alt={`${name} logo`} loading="lazy" className="w-full h-full object-contain" />
+      ) : (
+        <span className="font-semibold text-foreground">{initial}</span>
+      )}
+    </div>
+  );
+};
+
 const SidebarNav = ({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) => {
-  const { logout, tenantName } = useAdmin();
+  const { logout, tenantName, tenantLogo } = useAdmin();
   const { config } = useTenant();
   const location = useLocation();
   const displayName = tenantName || config.instituteName;
 
   return (
     <>
-      <div className={`p-4 border-b border-border ${collapsed ? 'text-center' : ''}`}>
-        {collapsed ? (
-          <span className="font-bold text-foreground text-lg">{displayName.charAt(0)}</span>
-        ) : (
-          <>
-            <h2 className="font-bold text-foreground text-lg truncate">{displayName}</h2>
-            <p className="text-xs text-muted-foreground">Admin Console</p>
-          </>
+      <Link
+        to="/admin/dashboard"
+        onClick={onNavigate}
+        className={`p-4 border-b border-border flex items-center gap-2.5 hover:bg-muted/60 transition ${collapsed ? 'justify-center' : ''}`}
+      >
+        <TenantBadge logo={tenantLogo} name={displayName} size="md" />
+        {!collapsed && (
+          <div className="min-w-0">
+            <h2 className="font-bold text-foreground text-sm truncate leading-tight">{displayName}</h2>
+            <p className="text-[11px] text-muted-foreground leading-tight">Admin Console</p>
+          </div>
         )}
-      </div>
+      </Link>
 
-      <nav className="flex-1 p-2 space-y-1">
+      <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const active = location.pathname === item.path;
           return (
@@ -73,8 +91,20 @@ const SidebarNav = ({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
   );
 };
 
+const HeaderBrand = ({ tenantName, tenantLogo }: { tenantName: string; tenantLogo: string | null }) => (
+  <Link to="/admin/dashboard" className="flex items-center gap-2.5 min-w-0 hover:opacity-90 transition">
+    <span className="w-7 h-7 rounded-md bg-primary text-primary-foreground flex items-center justify-center shrink-0" aria-label="Platform logo">
+      <GraduationCap className="w-4 h-4" />
+    </span>
+    <span className="text-muted-foreground/60 hidden sm:inline">/</span>
+    <TenantBadge logo={tenantLogo} name={tenantName} />
+    <span className="font-semibold text-foreground text-sm truncate">{tenantName}</span>
+  </Link>
+);
+
 const AdminLayout = () => {
-  const { isAuthenticated } = useAdmin();
+  const { isAuthenticated, tenantName, tenantLogo } = useAdmin();
+  const { config } = useTenant();
   const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem('admin-sidebar-collapsed') === 'true'; } catch { return false; }
@@ -89,23 +119,27 @@ const AdminLayout = () => {
     return <Navigate to="/admin" replace />;
   }
 
+  const displayName = tenantName || config.instituteName;
+
   if (isMobile) {
     return (
       <div className="min-h-screen bg-muted/30">
-        <header className="sticky top-0 z-40 bg-card border-b border-border flex items-center h-14 px-4 gap-3">
+        <header className="sticky top-0 z-40 bg-card border-b border-border flex items-center h-14 px-3 gap-2">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <button className="p-1.5"><PanelLeft className="w-5 h-5" /></button>
+              <button className="p-1.5 rounded-md hover:bg-muted" aria-label="Open menu">
+                <PanelLeft className="w-5 h-5" />
+              </button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0 flex flex-col">
               <SidebarNav collapsed={false} onNavigate={() => setMobileOpen(false)} />
             </SheetContent>
           </Sheet>
-          <span className="font-semibold text-foreground text-sm">Admin</span>
+          <HeaderBrand tenantName={displayName} tenantLogo={tenantLogo} />
         </header>
         <main className="p-4 overflow-auto">
           <ErrorBoundary>
-          <Outlet />
+            <Outlet />
           </ErrorBoundary>
         </main>
       </div>
@@ -119,14 +153,15 @@ const AdminLayout = () => {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border flex items-center h-12 px-4">
-          <button onClick={() => setCollapsed(c => !c)} className="p-1.5 rounded-md hover:bg-muted transition">
+        <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border flex items-center h-12 px-4 gap-3">
+          <button onClick={() => setCollapsed(c => !c)} className="p-1.5 rounded-md hover:bg-muted transition" aria-label="Toggle sidebar">
             {collapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
           </button>
+          <HeaderBrand tenantName={displayName} tenantLogo={tenantLogo} />
         </header>
         <main className="flex-1 p-6 overflow-auto">
           <ErrorBoundary>
-          <Outlet />
+            <Outlet />
           </ErrorBoundary>
         </main>
       </div>

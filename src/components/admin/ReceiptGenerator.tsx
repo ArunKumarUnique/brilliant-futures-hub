@@ -267,8 +267,7 @@ const ReceiptGenerator = () => {
             <SelectContent>
               {packages.map(p => (
                 <SelectItem key={p.id} value={p.id}>
-                  {typeof p.title === 'string' ? p.title : tr(p.title, language)}
-                  {p.special ? ' ★' : ''}
+                  {p.name}
                 </SelectItem>
               ))}
             </SelectContent>
