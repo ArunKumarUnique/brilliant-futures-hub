@@ -450,9 +450,12 @@ export type Database = {
       tenants_registry: {
         Row: {
           address: string
+          alternate_mobile: string | null
           city: string
           created_at: string
+          description: string | null
           email: string
+          established_year: number | null
           id: string
           institute_name: string
           institute_type: string | null
@@ -465,12 +468,18 @@ export type Database = {
           status: string
           summer_camp_enabled: boolean
           tenant_id: string
+          timings: string | null
+          website: string | null
+          whatsapp_number: string | null
         }
         Insert: {
           address: string
+          alternate_mobile?: string | null
           city: string
           created_at?: string
+          description?: string | null
           email: string
+          established_year?: number | null
           id?: string
           institute_name: string
           institute_type?: string | null
@@ -483,12 +492,18 @@ export type Database = {
           status?: string
           summer_camp_enabled?: boolean
           tenant_id: string
+          timings?: string | null
+          website?: string | null
+          whatsapp_number?: string | null
         }
         Update: {
           address?: string
+          alternate_mobile?: string | null
           city?: string
           created_at?: string
+          description?: string | null
           email?: string
+          established_year?: number | null
           id?: string
           institute_name?: string
           institute_type?: string | null
@@ -501,6 +516,9 @@ export type Database = {
           status?: string
           summer_camp_enabled?: boolean
           tenant_id?: string
+          timings?: string | null
+          website?: string | null
+          whatsapp_number?: string | null
         }
         Relationships: []
       }
