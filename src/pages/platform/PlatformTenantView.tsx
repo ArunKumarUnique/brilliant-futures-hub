@@ -108,6 +108,7 @@ const PlatformTenantView = () => {
         <Row label="State" value={tenant.state} />
         <Row label="Pincode" value={tenant.pincode} />
         <Row label="Created" value={new Date(tenant.created_at).toLocaleString()} />
+        <Row label="Forgot Password" value={tenant.forgot_password_enabled ? 'Enabled' : 'Disabled'} />
       </Card>
 
       {cred && (
