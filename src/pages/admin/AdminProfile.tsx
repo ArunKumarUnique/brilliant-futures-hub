@@ -81,6 +81,7 @@ const AdminProfile = () => {
   const [original, setOriginal] = useState<Partial<TenantProfile>>(EMPTY());
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [pwdOpen, setPwdOpen] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -204,10 +205,16 @@ const AdminProfile = () => {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Profile</h1>
-        <p className="text-sm text-muted-foreground">Manage your institute details, branding and contact info.</p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Profile</h1>
+          <p className="text-sm text-muted-foreground">Manage your institute details, branding and contact info.</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => setPwdOpen(true)}>
+          <KeyRound className="w-4 h-4 mr-1.5" /> Change Password
+        </Button>
       </div>
+      <ChangePasswordDialog open={pwdOpen} onOpenChange={setPwdOpen} />
 
       {/* Branding */}
       <section className="bg-card border border-border rounded-xl p-5 space-y-4">
