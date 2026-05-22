@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const AdminLogin = () => {
   const { login } = useAdmin();
@@ -14,15 +14,27 @@ const AdminLogin = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const ok = await login(email, password);
-    if (ok) {
-      navigate('/admin/dashboard');
-    } else {
-      setError('Invalid email or password');
+    if (!email.trim() || !password) {
+      setError('Email and password are required');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const ok = await login(email, password);
+      if (ok) {
+        navigate('/admin/dashboard');
+      } else {
+        setError('Invalid email or password. Please try again.');
+      }
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -50,13 +62,19 @@ const AdminLogin = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
+                  autoComplete="email"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <Link to="/admin/forgot-password" className="text-xs text-primary hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -66,6 +84,7 @@ const AdminLogin = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10"
+                  autoComplete="current-password"
                   required
                 />
                 <button
@@ -73,6 +92,7 @@ const AdminLogin = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -80,14 +100,16 @@ const AdminLogin = () => {
             </div>
 
             {error && (
-              <p className="text-sm text-destructive text-center">{error}</p>
+              <p className="text-sm text-destructive text-center" role="alert">{error}</p>
             )}
 
             <button
               type="submit"
-              className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold hover:opacity-90 transition"
+              disabled={submitting}
+              className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Sign In
+              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              {submitting ? 'Signing in…' : 'Sign In'}
             </button>
           </form>
         </div>
@@ -97,3 +119,4 @@ const AdminLogin = () => {
 };
 
 export default AdminLogin;
+
