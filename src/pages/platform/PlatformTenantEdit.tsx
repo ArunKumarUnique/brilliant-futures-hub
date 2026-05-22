@@ -43,8 +43,10 @@ const PlatformTenantEdit = () => {
     form: typeof form;
     logoUrl: string | null;
     summerCampEnabled: boolean;
+    forgotPasswordEnabled: boolean;
   } | null>(null);
   const [summerCampEnabled, setSummerCampEnabled] = useState(true);
+  const [forgotPasswordEnabled, setForgotPasswordEnabled] = useState(false);
   const [password, setPassword] = useState('');
 
   const setField = (key: keyof typeof form, value: string) => setForm((prev) => ({ ...prev, [key]: value }));
@@ -70,10 +72,12 @@ const PlatformTenantEdit = () => {
         setLogoUrl(t.logo_url || null);
         setTenantSlug(t.tenant_id || null);
         setSummerCampEnabled(t.summer_camp_enabled ?? true);
+        setForgotPasswordEnabled((t as any).forgot_password_enabled ?? false);
         setInitialState({
           form: loadedForm,
           logoUrl: t.logo_url || null,
           summerCampEnabled: t.summer_camp_enabled ?? true,
+          forgotPasswordEnabled: (t as any).forgot_password_enabled ?? false,
         });
       }
       if (c) setCredId(c.id);
@@ -105,9 +109,10 @@ const PlatformTenantEdit = () => {
     if (removeLogo && initialState.logoUrl) return true;
     if (!removeLogo && logoUrl !== initialState.logoUrl) return true;
     if (summerCampEnabled !== initialState.summerCampEnabled) return true;
+    if (forgotPasswordEnabled !== initialState.forgotPasswordEnabled) return true;
     if (password.trim()) return true;
     return false;
-  }, [form, logoFile, logoUrl, removeLogo, summerCampEnabled, password, initialState]);
+  }, [form, logoFile, logoUrl, removeLogo, summerCampEnabled, forgotPasswordEnabled, password, initialState]);
 
   useEffect(() => {
     return () => {
@@ -155,7 +160,7 @@ const PlatformTenantEdit = () => {
 
     const { error } = await supabase
       .from('tenants_registry')
-      .update({ ...form, email, summer_camp_enabled: summerCampEnabled })
+      .update({ ...form, email, summer_camp_enabled: summerCampEnabled, forgot_password_enabled: forgotPasswordEnabled } as any)
       .eq('id', id);
 
     if (error) {
@@ -348,6 +353,13 @@ const PlatformTenantEdit = () => {
               <p className="text-xs text-muted-foreground">Show Summer Camp packages, fees, attendance & dashboard for this tenant.</p>
             </div>
             <Switch checked={summerCampEnabled} onCheckedChange={setSummerCampEnabled} />
+          </div>
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div>
+              <Label className="text-sm">Enable Forgot Password</Label>
+              <p className="text-xs text-muted-foreground">Allow this tenant's admins to self-reset their password via the login page.</p>
+            </div>
+            <Switch checked={forgotPasswordEnabled} onCheckedChange={setForgotPasswordEnabled} />
           </div>
           <div>
             <Label>New Password (optional)</Label>

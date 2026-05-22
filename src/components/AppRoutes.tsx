@@ -13,6 +13,7 @@ import BrochureBuilder from '@/pages/BrochureBuilder';
 import Packages from '@/pages/Packages';
 import NotFound from '@/pages/NotFound';
 import AdminLogin from '@/pages/admin/AdminLogin';
+import AdminForgotPassword from '@/pages/admin/AdminForgotPassword';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import AdminStudents from '@/pages/admin/AdminStudents';
@@ -53,6 +54,7 @@ const AppRoutes = () => {
 
         {/* Admin routes */}
         <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="students" element={<AdminStudents />} />
