@@ -1,0 +1,1 @@
+ALTER TABLE public.tenants_registry ADD COLUMN IF NOT EXISTS forgot_password_enabled boolean NOT NULL DEFAULT false;

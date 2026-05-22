@@ -456,6 +456,7 @@ export type Database = {
           description: string | null
           email: string
           established_year: number | null
+          forgot_password_enabled: boolean
           id: string
           institute_name: string
           institute_type: string | null
@@ -480,6 +481,7 @@ export type Database = {
           description?: string | null
           email: string
           established_year?: number | null
+          forgot_password_enabled?: boolean
           id?: string
           institute_name: string
           institute_type?: string | null
@@ -504,6 +506,7 @@ export type Database = {
           description?: string | null
           email?: string
           established_year?: number | null
+          forgot_password_enabled?: boolean
           id?: string
           institute_name?: string
           institute_type?: string | null
