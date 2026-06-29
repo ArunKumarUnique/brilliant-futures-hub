@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useTenant } from '@/contexts/TenantContext';
 import { useAdmin } from '@/contexts/AdminContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
@@ -37,8 +38,9 @@ const CLASS_OPTIONS = [
   '8th Class', '9th Class', '10th Class',
 ];
 
+type Recipient = 'entire_class' | 'students';
+
 const AdminDailyLearnings = () => {
-  const { config } = useTenant();
   const { tenantId } = useAdmin();
 
   const [learnings, setLearnings] = useState<DailyLearning[]>([]);
@@ -47,25 +49,19 @@ const AdminDailyLearnings = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Form
+  // Form — new order: Class → Student(s) → Title → Description → Date
+  const [logClass, setLogClass] = useState('');
+  const [recipient, setRecipient] = useState<Recipient>('entire_class');
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [title, setTitle] = useState('');
+  const [notes, setNotes] = useState('');
   const [logDate, setLogDate] = useState<Date>(startOfDay(new Date()));
   const [datePickerOpen, setDatePickerOpen] = useState(false);
-  const [logClass, setLogClass] = useState('');
-  const [topic, setTopic] = useState('');
-  const [notes, setNotes] = useState('');
-  const [studentId, setStudentId] = useState('');
 
-  // Filter
   const [filterClass, setFilterClass] = useState('all');
 
   const fetchData = async () => {
-    if (!tenantId) {
-      toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
-      setLearnings([]);
-      setStudents([]);
-      setLoading(false);
-      return;
-    }
+    if (!tenantId) { setLearnings([]); setStudents([]); setLoading(false); return; }
     setLoading(true);
     const [{ data: lData }, { data: sData }] = await Promise.all([
       supabase.from('daily_learnings').select('*').eq('tenant_id', tenantId).order('date', { ascending: false }).order('created_at', { ascending: false }),
@@ -79,11 +75,21 @@ const AdminDailyLearnings = () => {
   useEffect(() => { fetchData(); }, [tenantId]);
 
   const resetForm = () => {
-    setLogDate(startOfDay(new Date()));
     setLogClass('');
-    setTopic('');
+    setRecipient('entire_class');
+    setSelectedStudents([]);
+    setTitle('');
     setNotes('');
-    setStudentId('');
+    setLogDate(startOfDay(new Date()));
+  };
+
+  const studentsForClass = useMemo(
+    () => (logClass ? students.filter(s => s.class === logClass) : []),
+    [logClass, students]
+  );
+
+  const toggleStudent = (id: string) => {
+    setSelectedStudents(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
   const handleSubmit = async () => {
@@ -91,27 +97,69 @@ const AdminDailyLearnings = () => {
       toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
       return;
     }
-    if (!logClass || !topic.trim()) {
-      toast({ title: 'Class and Topic are required', variant: 'destructive' });
+    if (!logClass) {
+      toast({ title: 'Validation Error', description: 'Class is required', variant: 'destructive' });
       return;
     }
+    if (recipient === 'students' && selectedStudents.length === 0) {
+      toast({ title: 'Validation Error', description: 'Select at least one student', variant: 'destructive' });
+      return;
+    }
+    if (!title.trim()) {
+      toast({ title: 'Validation Error', description: 'Title is required', variant: 'destructive' });
+      return;
+    }
+
     setSaving(true);
-    const { error } = await supabase.from('daily_learnings').insert({
-      tenant_id: tenantId,
-      date: format(logDate, 'yyyy-MM-dd'),
-      class: logClass,
-      topic: topic.trim(),
-      notes: notes.trim() || null,
-      student_id: studentId || null,
-    });
-    setSaving(false);
-    if (error) {
-      toast({ title: 'Failed to log', description: error.message, variant: 'destructive' });
-    } else {
+    const dateStr = format(logDate, 'yyyy-MM-dd');
+    try {
+      if (recipient === 'students') {
+        const { data: existing } = await supabase
+          .from('daily_learnings')
+          .select('student_id')
+          .eq('tenant_id', tenantId)
+          .eq('date', dateStr)
+          .in('student_id', selectedStudents);
+        const dupIds = new Set((existing || []).map((r: any) => r.student_id));
+        if (dupIds.size > 0) {
+          const names = students.filter(s => dupIds.has(s.id)).map(s => s.student_name).join(', ');
+          toast({
+            title: 'Duplicate Daily Learning',
+            description: `Daily Learning already exists for this student on the selected date: ${names}`,
+            variant: 'destructive',
+          });
+          setSaving(false);
+          return;
+        }
+        const rows = selectedStudents.map(sid => ({
+          tenant_id: tenantId,
+          date: dateStr,
+          class: logClass,
+          topic: title.trim(),
+          notes: notes.trim() || null,
+          student_id: sid,
+        }));
+        const { error } = await supabase.from('daily_learnings').insert(rows);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('daily_learnings').insert({
+          tenant_id: tenantId,
+          date: dateStr,
+          class: logClass,
+          topic: title.trim(),
+          notes: notes.trim() || null,
+          student_id: null,
+        });
+        if (error) throw error;
+      }
       toast({ title: 'Learning logged!' });
       resetForm();
       setFormOpen(false);
       fetchData();
+    } catch (e: any) {
+      toast({ title: 'Failed to log', description: e.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -133,11 +181,6 @@ const AdminDailyLearnings = () => {
     return m;
   }, [students]);
 
-  const studentsForClass = useMemo(() =>
-    logClass ? students.filter(s => s.class === logClass) : students,
-    [logClass, students]
-  );
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -150,7 +193,6 @@ const AdminDailyLearnings = () => {
         </Button>
       </div>
 
-      {/* Filter */}
       <div className="w-40">
         <Select value={filterClass} onValueChange={setFilterClass}>
           <SelectTrigger><SelectValue placeholder="All Classes" /></SelectTrigger>
@@ -161,7 +203,6 @@ const AdminDailyLearnings = () => {
         </Select>
       </div>
 
-      {/* List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -187,10 +228,10 @@ const AdminDailyLearnings = () => {
               {l.notes && <p className="text-sm text-muted-foreground line-clamp-2">{l.notes}</p>}
               <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                 <span>{format(new Date(l.date), 'dd MMM yyyy')}</span>
-                {l.student_id && (
-                  <Badge variant="secondary" className="text-xs">
-                    {studentMap[l.student_id] || 'Student'}
-                  </Badge>
+                {l.student_id ? (
+                  <Badge variant="secondary" className="text-xs">{studentMap[l.student_id] || 'Student'}</Badge>
+                ) : (
+                  <Badge variant="secondary" className="text-xs">Entire Class</Badge>
                 )}
               </div>
             </div>
@@ -198,68 +239,97 @@ const AdminDailyLearnings = () => {
         </div>
       )}
 
-      {/* Add Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Log Daily Learning</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Date</Label>
-                <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !logDate && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {logDate ? format(logDate, 'dd MMM') : 'Pick date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={logDate}
-                      onSelect={(d) => { if (d) { setLogDate(startOfDay(d)); setDatePickerOpen(false); } }}
-                      disabled={(d) => d > new Date()}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div>
-                <Label>Class *</Label>
-                <Select value={logClass} onValueChange={v => { setLogClass(v); setStudentId(''); }}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>
-                    {CLASS_OPTIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            {/* 1. Class */}
             <div>
-              <Label>Topic Covered *</Label>
-              <Input value={topic} onChange={e => setTopic(e.target.value)} placeholder="e.g. Newton's Laws of Motion" />
-            </div>
-            <div>
-              <Label>Notes (optional)</Label>
-              <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Additional details..." rows={2} />
-            </div>
-            <div>
-              <Label>Student (optional)</Label>
-              <Select
-                value={studentId || '__all__'}
-                onValueChange={(v) => setStudentId(v === '__all__' ? '' : v)}
-              >
-                <SelectTrigger><SelectValue placeholder="All students" /></SelectTrigger>
+              <Label>Class *</Label>
+              <Select value={logClass} onValueChange={v => { setLogClass(v); setSelectedStudents([]); }}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__all__">All students</SelectItem>
-                  {(studentsForClass ?? []).map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.student_name}</SelectItem>
-                  ))}
+                  {CLASS_OPTIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* 2. Student(s) */}
+            <div className="space-y-2">
+              <Label>Recipients *</Label>
+              <RadioGroup
+                value={recipient}
+                onValueChange={(v) => { setRecipient(v as Recipient); setSelectedStudents([]); }}
+                className="flex flex-wrap gap-4"
+              >
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <RadioGroupItem value="entire_class" id="dl-r-class" />
+                  <span className="text-sm">Entire Class</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <RadioGroupItem value="students" id="dl-r-students" />
+                  <span className="text-sm">Select Student(s)</span>
+                </label>
+              </RadioGroup>
+
+              {recipient === 'students' && (
+                <div className="border border-border rounded-md p-2 max-h-40 overflow-y-auto space-y-1">
+                  {!logClass ? (
+                    <p className="text-xs text-muted-foreground p-2">Select a class first.</p>
+                  ) : studentsForClass.length === 0 ? (
+                    <p className="text-xs text-muted-foreground p-2">No active students in this class.</p>
+                  ) : (
+                    studentsForClass.map(s => (
+                      <label key={s.id} className="flex items-center gap-2 p-1 rounded hover:bg-muted cursor-pointer">
+                        <Checkbox
+                          checked={selectedStudents.includes(s.id)}
+                          onCheckedChange={() => toggleStudent(s.id)}
+                        />
+                        <span className="text-sm">{s.student_name}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* 3. Title */}
+            <div>
+              <Label>Title *</Label>
+              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Newton's Laws of Motion" />
+            </div>
+
+            {/* 4. Description */}
+            <div>
+              <Label>Description</Label>
+              <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Topics covered, details..." rows={3} />
+            </div>
+
+            {/* 5. Learning Date */}
+            <div>
+              <Label>Learning Date</Label>
+              <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !logDate && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {logDate ? format(logDate, 'dd MMM yyyy') : 'Pick date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={logDate}
+                    onSelect={(d) => { if (d) { setLogDate(startOfDay(d)); setDatePickerOpen(false); } }}
+                    disabled={(d) => d > new Date()}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
             <Button onClick={handleSubmit} disabled={saving} className="w-full">
               {saving ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Saving...</> : 'Log Learning'}
             </Button>

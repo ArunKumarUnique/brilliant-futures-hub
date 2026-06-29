@@ -122,6 +122,8 @@ const AdminStudents = () => {
       status: data.status,
       student_type: data.student_type,
       notes: data.notes.trim() || null,
+      gender: data.gender || null,
+      parent_relation: data.parent_relation || null,
     } as any);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -148,6 +150,8 @@ const AdminStudents = () => {
       status: data.status,
       student_type: data.student_type,
       notes: data.notes.trim() || null,
+      gender: data.gender || null,
+      parent_relation: data.parent_relation || null,
     } as any).eq('id', editingStudent.id).eq('tenant_id', tenantId);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -339,6 +343,8 @@ const AdminStudents = () => {
           status: editingStudent.status,
           student_type: (editingStudent.student_type as StudentType) || 'regular',
           notes: editingStudent.notes || '',
+          gender: (editingStudent as any).gender || '',
+          parent_relation: (editingStudent as any).parent_relation || '',
         } : null}
       />
 

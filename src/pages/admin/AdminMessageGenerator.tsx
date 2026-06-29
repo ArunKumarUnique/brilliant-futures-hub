@@ -17,6 +17,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { format, isToday, isTomorrow, startOfDay } from 'date-fns';
+import DailyNotifications from '@/components/admin/DailyNotifications';
 
 const AdminMessageGenerator = () => {
   const { config } = useTenant();
@@ -31,21 +32,19 @@ const AdminMessageGenerator = () => {
     <div className="space-y-4">
       <h1 className="text-xl font-bold text-foreground">Message Generator</h1>
       <Tabs defaultValue="fee" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto gap-1">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto gap-1">
           <TabsTrigger value="fee" className="text-xs px-1 py-2">Fee</TabsTrigger>
           <TabsTrigger value="closed" className="text-xs px-1 py-2">Closed</TabsTrigger>
           <TabsTrigger value="timings" className="text-xs px-1 py-2">Timings</TabsTrigger>
           <TabsTrigger value="occasion" className="text-xs px-1 py-2">Occasion</TabsTrigger>
-          <TabsTrigger value="homework" className="text-xs px-1 py-2">Homework</TabsTrigger>
-          <TabsTrigger value="learnings" className="text-xs px-1 py-2">Learnings</TabsTrigger>
+          <TabsTrigger value="daily" className="text-xs px-1 py-2">Daily Notifications</TabsTrigger>
         </TabsList>
 
         <TabsContent value="fee"><FeeReminder instituteName={name} tenantId={tenantId} /></TabsContent>
         <TabsContent value="closed"><TuitionClosed instituteName={name} /></TabsContent>
         <TabsContent value="timings"><TimingsUpdate instituteName={name} /></TabsContent>
         <TabsContent value="occasion"><OccasionWishes instituteName={name} /></TabsContent>
-        <TabsContent value="homework"><HomeworkMessage instituteName={name} tenantId={tenantId} /></TabsContent>
-        <TabsContent value="learnings"><LearningsMessage instituteName={name} tenantId={tenantId} /></TabsContent>
+        <TabsContent value="daily"><DailyNotifications instituteName={name} tenantId={tenantId} /></TabsContent>
       </Tabs>
     </div>
   );
