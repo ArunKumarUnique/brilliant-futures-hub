@@ -308,9 +308,35 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
               <Input
                 type="number"
                 value={monthlyFeeInput}
-                onChange={(e) => setMonthlyFeeInput(e.target.value.replace(/\D/g, ''))}
+                onChange={(e) => {
+                  setMonthlyFeeInput(e.target.value.replace(/\D/g, ''));
+                  setFeeManuallyEdited(true);
+                }}
                 placeholder="0"
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Gender</Label>
+              <Select value={form.gender || ''} onValueChange={v => handleChange('gender', v)}>
+                <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Parent Relation</Label>
+              <Select value={form.parent_relation || ''} onValueChange={v => handleChange('parent_relation', v)}>
+                <SelectTrigger><SelectValue placeholder="Select relation" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Father">Father</SelectItem>
+                  <SelectItem value="Mother">Mother</SelectItem>
+                  <SelectItem value="Guardian">Guardian</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Admission Date</Label>
