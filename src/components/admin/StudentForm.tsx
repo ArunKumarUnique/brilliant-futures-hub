@@ -55,6 +55,8 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
   const { tenantId, summerCampEnabled } = useAdmin();
   const { packages: allPackages } = usePackages(tenantId || null, { status: 'active' });
   const [monthlyFeeInput, setMonthlyFeeInput] = useState<string>('0');
+  // Tracks whether the user manually edited the fee; if so, we stop auto-filling on package change.
+  const [feeManuallyEdited, setFeeManuallyEdited] = useState(false);
 
   const emptyForm: StudentFormData = {
     student_name: '',
@@ -70,14 +72,20 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
     status: 'active',
     student_type: defaultStudentType || 'regular',
     notes: '',
+    gender: '',
+    parent_relation: '',
   };
 
   const [form, setForm] = useState<StudentFormData>(emptyForm);
 
   useEffect(() => {
     if (open) {
-      setForm(initialData || { ...emptyForm, student_type: defaultStudentType || 'regular' });
+      const next = initialData
+        ? { ...emptyForm, ...initialData }
+        : { ...emptyForm, student_type: defaultStudentType || 'regular' };
+      setForm(next);
       setMonthlyFeeInput(initialData ? String(initialData.monthly_fee ?? 0) : '0');
+      setFeeManuallyEdited(!!initialData); // editing existing → preserve fee, don't auto-overwrite
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialData, defaultStudentType]);
@@ -97,11 +105,15 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
         v = sanitizeMobile(v);
       }
       const next = { ...prev, [field]: v } as StudentFormData;
-      // Auto-sync student type when summer-camp package is selected
+      // Auto-sync student type + monthly fee when package is selected/changed
       if (field === 'package_id' && typeof v === 'string') {
         const pkg = allPackages.find((p) => p.id === v);
         if (pkg) {
           next.student_type = pkg.type === 'summer_camp' ? 'summer_camp' : 'regular';
+          if (!feeManuallyEdited) {
+            next.monthly_fee = pkg.fee;
+            setMonthlyFeeInput(String(pkg.fee));
+          }
         }
       }
       return next;
@@ -115,6 +127,7 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
       setForm(prev => ({ ...prev, package_id: '' }));
     }
   }, [form.student_type, form.package_id, allPackages]);
+
 
   const isValidMobile = (m: string) => /^\d{10}$/.test(m);
 
