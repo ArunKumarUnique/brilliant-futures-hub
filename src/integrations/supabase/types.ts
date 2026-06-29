@@ -282,6 +282,7 @@ export type Database = {
           admission_date: string | null
           class: string
           created_at: string | null
+          gender: string | null
           id: string
           monthly_fee: number
           notes: string | null
@@ -289,6 +290,7 @@ export type Database = {
           parent_email: string | null
           parent_mobile: string
           parent_name: string | null
+          parent_relation: string | null
           status: string
           student_email: string | null
           student_mobile: string | null
@@ -301,6 +303,7 @@ export type Database = {
           admission_date?: string | null
           class: string
           created_at?: string | null
+          gender?: string | null
           id?: string
           monthly_fee?: number
           notes?: string | null
@@ -308,6 +311,7 @@ export type Database = {
           parent_email?: string | null
           parent_mobile: string
           parent_name?: string | null
+          parent_relation?: string | null
           status?: string
           student_email?: string | null
           student_mobile?: string | null
@@ -320,6 +324,7 @@ export type Database = {
           admission_date?: string | null
           class?: string
           created_at?: string | null
+          gender?: string | null
           id?: string
           monthly_fee?: number
           notes?: string | null
@@ -327,6 +332,7 @@ export type Database = {
           parent_email?: string | null
           parent_mobile?: string
           parent_name?: string | null
+          parent_relation?: string | null
           status?: string
           student_email?: string | null
           student_mobile?: string | null
