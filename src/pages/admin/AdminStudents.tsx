@@ -339,6 +339,8 @@ const AdminStudents = () => {
           status: editingStudent.status,
           student_type: (editingStudent.student_type as StudentType) || 'regular',
           notes: editingStudent.notes || '',
+          gender: (editingStudent as any).gender || '',
+          parent_relation: (editingStudent as any).parent_relation || '',
         } : null}
       />
 
