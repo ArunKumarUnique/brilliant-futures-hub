@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useTenant } from '@/contexts/TenantContext';
 import { useAdmin } from '@/contexts/AdminContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
@@ -40,12 +41,9 @@ const CLASS_OPTIONS = [
   '8th Class', '9th Class', '10th Class',
 ];
 
-const SUBJECT_OPTIONS = [
-  'Telugu', 'Hindi', 'English', 'Maths', 'Science', 'Social', 'Physics', 'Chemistry', 'Other',
-];
+type Recipient = 'entire_class' | 'students';
 
 const AdminHomework = () => {
-  const { config } = useTenant();
   const { tenantId } = useAdmin();
 
   const [homework, setHomework] = useState<Homework[]>([]);
@@ -54,12 +52,12 @@ const AdminHomework = () => {
   const [saving, setSaving] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
 
-  // Form state
+  // Form state — new order: Class → Student(s) → Title → Description → Date → Due
+  const [selectedClass, setSelectedClass] = useState('');
+  const [recipient, setRecipient] = useState<Recipient>('entire_class');
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [subject, setSubject] = useState('');
-  const [selectedClass, setSelectedClass] = useState('');
-  const [selectedStudent, setSelectedStudent] = useState('');
   const [assignedDate, setAssignedDate] = useState<Date>(new Date());
   const [dueDate, setDueDate] = useState<Date | undefined>();
   const [assignedDateOpen, setAssignedDateOpen] = useState(false);
@@ -71,35 +69,27 @@ const AdminHomework = () => {
   const [filterDateOpen, setFilterDateOpen] = useState(false);
 
   const fetchHomework = async () => {
-    if (!tenantId) {
-      toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
-      setHomework([]);
-      setLoading(false);
-      return;
-    }
+    if (!tenantId) { setHomework([]); setLoading(false); return; }
     setLoading(true);
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('homework')
       .select('*')
       .eq('tenant_id', tenantId)
       .order('assigned_date', { ascending: false })
       .order('created_at', { ascending: false });
-    if (!error && data) setHomework(data);
+    setHomework(data || []);
     setLoading(false);
   };
 
   const fetchStudents = async () => {
-    if (!tenantId) {
-      setStudents([]);
-      return;
-    }
+    if (!tenantId) { setStudents([]); return; }
     const { data } = await supabase
       .from('students')
       .select('id, student_name, class')
       .eq('tenant_id', tenantId)
       .eq('status', 'active')
       .order('student_name');
-    if (data) setStudents(data);
+    setStudents(data || []);
   };
 
   useEffect(() => {
@@ -108,13 +98,22 @@ const AdminHomework = () => {
   }, [tenantId]);
 
   const resetForm = () => {
+    setSelectedClass('');
+    setRecipient('entire_class');
+    setSelectedStudents([]);
     setTitle('');
     setDescription('');
-    setSubject('');
-    setSelectedClass('');
-    setSelectedStudent('');
     setAssignedDate(new Date());
     setDueDate(undefined);
+  };
+
+  const studentsForClass = useMemo(
+    () => (selectedClass ? students.filter(s => s.class === selectedClass) : []),
+    [selectedClass, students]
+  );
+
+  const toggleStudent = (id: string) => {
+    setSelectedStudents(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
   const handleSubmit = async () => {
@@ -122,46 +121,78 @@ const AdminHomework = () => {
       toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
       return;
     }
-    if (!title.trim() || !description.trim()) {
-      toast({ title: 'Title and Description are required', variant: 'destructive' });
+    if (!selectedClass) {
+      toast({ title: 'Validation Error', description: 'Class is required', variant: 'destructive' });
       return;
     }
-    const hwClass = selectedStudent
-      ? students.find(s => s.id === selectedStudent)?.class || selectedClass
-      : selectedClass;
-
-    if (!hwClass) {
-      toast({ title: 'Please select a class or student', variant: 'destructive' });
+    if (recipient === 'students' && selectedStudents.length === 0) {
+      toast({ title: 'Validation Error', description: 'Select at least one student', variant: 'destructive' });
+      return;
+    }
+    if (!title.trim() || !description.trim()) {
+      toast({ title: 'Validation Error', description: 'Title and Description are required', variant: 'destructive' });
       return;
     }
 
     setSaving(true);
-    const { error } = await supabase.from('homework').insert({
-      tenant_id: tenantId,
-      title: title.trim(),
-      description: description.trim(),
-      subject: subject || null,
-      class: hwClass,
-      student_id: selectedStudent || null,
-      assigned_date: format(assignedDate, 'yyyy-MM-dd'),
-      due_date: dueDate ? format(dueDate, 'yyyy-MM-dd') : null,
-    });
+    const assignedStr = format(assignedDate, 'yyyy-MM-dd');
+    const dueStr = dueDate ? format(dueDate, 'yyyy-MM-dd') : null;
 
-    setSaving(false);
-    if (error) {
-      toast({ title: 'Failed to assign homework', description: error.message, variant: 'destructive' });
-    } else {
+    try {
+      if (recipient === 'students') {
+        // Duplicate check per student
+        const { data: existing } = await supabase
+          .from('homework')
+          .select('student_id')
+          .eq('tenant_id', tenantId)
+          .eq('assigned_date', assignedStr)
+          .in('student_id', selectedStudents);
+        const dupIds = new Set((existing || []).map((r: any) => r.student_id));
+        if (dupIds.size > 0) {
+          const names = students.filter(s => dupIds.has(s.id)).map(s => s.student_name).join(', ');
+          toast({
+            title: 'Duplicate Homework',
+            description: `Homework already exists for this student on the selected date: ${names}`,
+            variant: 'destructive',
+          });
+          setSaving(false);
+          return;
+        }
+        const rows = selectedStudents.map(sid => ({
+          tenant_id: tenantId,
+          title: title.trim(),
+          description: description.trim(),
+          class: selectedClass,
+          student_id: sid,
+          assigned_date: assignedStr,
+          due_date: dueStr,
+        }));
+        const { error } = await supabase.from('homework').insert(rows as any);
+        if (error) throw error;
+      } else {
+        // entire class — single row, student_id null
+        const { error } = await supabase.from('homework').insert({
+          tenant_id: tenantId,
+          title: title.trim(),
+          description: description.trim(),
+          class: selectedClass,
+          student_id: null,
+          assigned_date: assignedStr,
+          due_date: dueStr,
+        } as any);
+        if (error) throw error;
+      }
+
       toast({ title: 'Homework assigned successfully!' });
       resetForm();
       setFormOpen(false);
       fetchHomework();
+    } catch (e: any) {
+      toast({ title: 'Failed to assign homework', description: e.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
     }
   };
-
-  const studentsForClass = useMemo(() =>
-    selectedClass ? students.filter(s => s.class === selectedClass) : students,
-    [selectedClass, students]
-  );
 
   const filtered = useMemo(() => {
     let list = homework;
@@ -181,7 +212,6 @@ const AdminHomework = () => {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-xl font-bold text-foreground">Homework</h1>
@@ -245,13 +275,14 @@ const AdminHomework = () => {
               </div>
               <p className="text-sm text-muted-foreground line-clamp-2">{hw.description}</p>
               <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                {hw.subject && <span className="bg-muted px-2 py-0.5 rounded">{hw.subject}</span>}
                 <span>Assigned: {format(new Date(hw.assigned_date), 'dd MMM yyyy')}</span>
                 {hw.due_date && <span>Due: {format(new Date(hw.due_date), 'dd MMM yyyy')}</span>}
-                {hw.student_id && (
+                {hw.student_id ? (
                   <Badge variant="secondary" className="text-xs">
                     {studentNameMap[hw.student_id] || 'Student'}
                   </Badge>
+                ) : (
+                  <Badge variant="secondary" className="text-xs">Entire Class</Badge>
                 )}
               </div>
             </div>
@@ -266,50 +297,72 @@ const AdminHomework = () => {
             <DialogTitle>Assign Homework</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label>Title *</Label>
-              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Chapter 5 exercises" />
-            </div>
-            <div>
-              <Label>Description *</Label>
-              <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Homework details..." rows={3} />
-            </div>
-            <div>
-              <Label>Subject</Label>
-              <Select value={subject} onValueChange={setSubject}>
-                <SelectTrigger><SelectValue placeholder="Select subject" /></SelectTrigger>
-                <SelectContent>
-                  {SUBJECT_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* 1. Class */}
             <div>
               <Label>Class *</Label>
-              <Select value={selectedClass} onValueChange={(v) => { setSelectedClass(v); setSelectedStudent(''); }}>
+              <Select value={selectedClass} onValueChange={(v) => { setSelectedClass(v); setSelectedStudents([]); }}>
                 <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
                 <SelectContent>
                   {CLASS_OPTIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Student (optional – overrides class)</Label>
-              <Select
-                value={selectedStudent || '__all__'}
-                onValueChange={(v) => setSelectedStudent(v === '__all__' ? '' : v)}
+
+            {/* 2. Student(s) */}
+            <div className="space-y-2">
+              <Label>Recipients *</Label>
+              <RadioGroup
+                value={recipient}
+                onValueChange={(v) => { setRecipient(v as Recipient); setSelectedStudents([]); }}
+                className="flex flex-wrap gap-4"
               >
-                <SelectTrigger><SelectValue placeholder="All students in class" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">All students in class</SelectItem>
-                  {(studentsForClass ?? []).map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.student_name} ({s.class})</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <RadioGroupItem value="entire_class" id="r-class" />
+                  <span className="text-sm">Entire Class</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <RadioGroupItem value="students" id="r-students" />
+                  <span className="text-sm">Select Student(s)</span>
+                </label>
+              </RadioGroup>
+
+              {recipient === 'students' && (
+                <div className="border border-border rounded-md p-2 max-h-40 overflow-y-auto space-y-1">
+                  {!selectedClass ? (
+                    <p className="text-xs text-muted-foreground p-2">Select a class first.</p>
+                  ) : studentsForClass.length === 0 ? (
+                    <p className="text-xs text-muted-foreground p-2">No active students in this class.</p>
+                  ) : (
+                    studentsForClass.map(s => (
+                      <label key={s.id} className="flex items-center gap-2 p-1 rounded hover:bg-muted cursor-pointer">
+                        <Checkbox
+                          checked={selectedStudents.includes(s.id)}
+                          onCheckedChange={() => toggleStudent(s.id)}
+                        />
+                        <span className="text-sm">{s.student_name}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
+
+            {/* 3. Title */}
+            <div>
+              <Label>Title *</Label>
+              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Chapter 5 exercises" />
+            </div>
+
+            {/* 4. Description */}
+            <div>
+              <Label>Description *</Label>
+              <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Homework details..." rows={3} />
+            </div>
+
+            {/* 5 & 6. Dates */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Date</Label>
+                <Label>Homework Date</Label>
                 <Popover open={assignedDateOpen} onOpenChange={setAssignedDateOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-start text-left font-normal">
@@ -342,7 +395,6 @@ const AdminHomework = () => {
                       mode="single"
                       selected={dueDate}
                       onSelect={d => { setDueDate(d); setDueDateOpen(false); }}
-                      disabled={(d) => d > new Date()}
                       className="p-3 pointer-events-auto"
                     />
                   </PopoverContent>
