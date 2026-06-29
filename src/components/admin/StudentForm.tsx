@@ -33,6 +33,8 @@ export interface StudentFormData {
   status: string;
   student_type: StudentType;
   notes: string;
+  gender: string;
+  parent_relation: string;
 }
 
 interface StudentFormProps {
