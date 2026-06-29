@@ -122,6 +122,8 @@ const AdminStudents = () => {
       status: data.status,
       student_type: data.student_type,
       notes: data.notes.trim() || null,
+      gender: data.gender || null,
+      parent_relation: data.parent_relation || null,
     } as any);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
