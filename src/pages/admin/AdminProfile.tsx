@@ -102,8 +102,9 @@ const AdminProfile = () => {
 
   const update = (k: keyof TenantProfile, v: any) => setForm(f => ({ ...f, [k]: v }));
 
-  const handleLogoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    if (fileRef.current) fileRef.current.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       toast({ title: 'Invalid file', description: 'Please upload an image file', variant: 'destructive' });
@@ -113,24 +114,37 @@ const AdminProfile = () => {
       toast({ title: 'File too large', description: 'Maximum size is 5MB', variant: 'destructive' });
       return;
     }
+    const reader = new FileReader();
+    reader.onload = () => setCropSrc(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const uploadCroppedBlob = async (blob: Blob) => {
+    setCropSrc(null);
+    const previousLogo = form.logo_url;
+    const localPreview = URL.createObjectURL(blob);
+    setLogoPreview(localPreview);
     try {
       setUploading(true);
-      const blob = await compressImage(file, 512);
+      setUploadPct(15);
       const path = `${tenantId}/logo-${Date.now()}.png`;
+      const tick = setInterval(() => setUploadPct(p => Math.min(85, p + 7)), 120);
       const { error } = await supabase.storage.from('tenant-logos').upload(path, blob, {
         contentType: 'image/png', upsert: true,
       });
+      clearInterval(tick);
       if (error) throw error;
+      setUploadPct(100);
       const { data } = supabase.storage.from('tenant-logos').getPublicUrl(path);
-      const url = data.publicUrl;
-      setLogoPreview(URL.createObjectURL(blob));
-      update('logo_url', url);
+      update('logo_url', data.publicUrl);
       toast({ title: 'Logo ready', description: 'Click Save to apply' });
     } catch (err: any) {
-      toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
+      setLogoPreview(null);
+      update('logo_url', previousLogo || '');
+      toast({ title: 'Upload failed', description: err.message || 'Please try again', variant: 'destructive' });
     } finally {
       setUploading(false);
-      if (fileRef.current) fileRef.current.value = '';
+      setTimeout(() => setUploadPct(0), 600);
     }
   };
 
