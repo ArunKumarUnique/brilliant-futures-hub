@@ -244,6 +244,77 @@ export type Database = {
           },
         ]
       }
+      notification_history: {
+        Row: {
+          batch_id: string | null
+          channel: string
+          class: string | null
+          created_at: string
+          created_by: string | null
+          failure_reason: string | null
+          gender: string | null
+          id: string
+          message: string
+          notification_type: string
+          parent_mobile: string | null
+          parent_name: string | null
+          parent_relation: string | null
+          provider: string
+          status: string
+          student_id: string | null
+          student_name: string
+          tenant_id: string
+        }
+        Insert: {
+          batch_id?: string | null
+          channel?: string
+          class?: string | null
+          created_at?: string
+          created_by?: string | null
+          failure_reason?: string | null
+          gender?: string | null
+          id?: string
+          message: string
+          notification_type: string
+          parent_mobile?: string | null
+          parent_name?: string | null
+          parent_relation?: string | null
+          provider?: string
+          status?: string
+          student_id?: string | null
+          student_name: string
+          tenant_id: string
+        }
+        Update: {
+          batch_id?: string | null
+          channel?: string
+          class?: string | null
+          created_at?: string
+          created_by?: string | null
+          failure_reason?: string | null
+          gender?: string | null
+          id?: string
+          message?: string
+          notification_type?: string
+          parent_mobile?: string | null
+          parent_name?: string | null
+          parent_relation?: string | null
+          provider?: string
+          status?: string
+          student_id?: string | null
+          student_name?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_history_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_admins: {
         Row: {
           created_at: string
