@@ -213,149 +213,162 @@ const StudentForm = ({ open, onClose, onSubmit, initialData, isEditing, defaultS
               )}
             </RadioGroup>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>Student Name *</Label>
-              <Input value={form.student_name} onChange={e => handleChange('student_name', e.target.value)} placeholder="Enter student name" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Parent Name *</Label>
-              <Input value={form.parent_name} onChange={e => handleChange('parent_name', e.target.value)} placeholder="Enter parent name" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Student Mobile</Label>
-              <Input
-                type="tel"
-                inputMode="numeric"
-                pattern="[0-9]{10}"
-                maxLength={10}
-                value={form.student_mobile}
-                onChange={e => handleChange('student_mobile', e.target.value)}
-                placeholder="10-digit mobile"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Parent Mobile *</Label>
-              <Input
-                type="tel"
-                inputMode="numeric"
-                pattern="[0-9]{10}"
-                maxLength={10}
-                value={form.parent_mobile}
-                onChange={e => handleChange('parent_mobile', e.target.value)}
-                placeholder="10-digit mobile"
-              />
-              {form.parent_mobile && !/^\d{10}$/.test(form.parent_mobile) && (
-                <p className="text-xs text-destructive">Enter valid 10-digit mobile number</p>
-              )}
-            </div>
-            <div className="space-y-1.5">
-              <Label>Student Email</Label>
-              <Input type="email" value={form.student_email} onChange={e => handleChange('student_email', e.target.value)} placeholder="Student email" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Parent Email</Label>
-              <Input type="email" value={form.parent_email} onChange={e => handleChange('parent_email', e.target.value)} placeholder="Parent email" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Class *</Label>
-              <Select value={form.class} onValueChange={v => handleChange('class', v)}>
-                <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
-                <SelectContent>
-                  {CLASS_OPTIONS.map(c => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Package *</Label>
-              <Select value={form.package_id} onValueChange={v => handleChange('package_id', v)} disabled={packages.length === 0}>
-                <SelectTrigger><SelectValue placeholder="Select package" /></SelectTrigger>
-                <SelectContent>
-                  {packages.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-muted-foreground">Create a package first</div>
-                  ) : (
-                    <>
-                    {/* Grouped package display based on selected student type */}
-                    {form.student_type === 'regular' && regularPackages.length > 0 && (
-                      <>
-                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Regular Packages</div>
-                        {regularPackages.map(p => (
-                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                        ))}
-                      </>
-                    )}
-                    {form.student_type === 'summer_camp' && summerPackages.length > 0 && (
-                      <>
-                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Summer Camp Packages</div>
-                        {summerPackages.map(p => (
-                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                        ))}
-                      </>
-                    )}
-                    {/* No fallback packages shown for new tenants */}
-                    {packages.length > 0 && form.package_id && !packages.some(p => p.id === form.package_id) && (
-                      <div className="px-3 py-2 text-sm text-destructive">Selected package is unavailable</div>
-                    )}
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Monthly Fee (₹)</Label>
-              <Input
-                type="number"
-                value={monthlyFeeInput}
-                onChange={(e) => {
-                  setMonthlyFeeInput(e.target.value.replace(/\D/g, ''));
-                  setFeeManuallyEdited(true);
-                }}
-                placeholder="0"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Gender</Label>
-              <Select value={form.gender || ''} onValueChange={v => handleChange('gender', v)}>
-                <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Parent Relation</Label>
-              <Select value={form.parent_relation || ''} onValueChange={v => handleChange('parent_relation', v)}>
-                <SelectTrigger><SelectValue placeholder="Select relation" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Father">Father</SelectItem>
-                  <SelectItem value="Mother">Mother</SelectItem>
-                  <SelectItem value="Guardian">Guardian</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Admission Date</Label>
-              <Input type="date" value={form.admission_date} onChange={e => handleChange('admission_date', e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Status</Label>
-              <Select value={form.status} onValueChange={v => handleChange('status', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
+          {/* Basic Information */}
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-2">Basic Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Student Name *</Label>
+                <Input value={form.student_name} onChange={e => handleChange('student_name', e.target.value)} placeholder="Enter student name" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Gender</Label>
+                <Select value={form.gender || ''} onValueChange={v => handleChange('gender', v)}>
+                  <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label>Notes</Label>
-            <Textarea value={form.notes} onChange={e => handleChange('notes', e.target.value)} placeholder="Any additional notes..." rows={3} />
+
+          {/* Academic Information */}
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-2">Academic Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Class *</Label>
+                <Select value={form.class} onValueChange={v => handleChange('class', v)}>
+                  <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
+                  <SelectContent>
+                    {CLASS_OPTIONS.map(c => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Package *</Label>
+                <Select value={form.package_id} onValueChange={v => handleChange('package_id', v)} disabled={packages.length === 0}>
+                  <SelectTrigger><SelectValue placeholder="Select package" /></SelectTrigger>
+                  <SelectContent>
+                    {packages.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">Create a package first</div>
+                    ) : (
+                      <>
+                        {form.student_type === 'regular' && regularPackages.length > 0 && (
+                          <>
+                            <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Regular Packages</div>
+                            {regularPackages.map(p => (
+                              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                            ))}
+                          </>
+                        )}
+                        {form.student_type === 'summer_camp' && summerPackages.length > 0 && (
+                          <>
+                            <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Summer Camp Packages</div>
+                            {summerPackages.map(p => (
+                              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                            ))}
+                          </>
+                        )}
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Monthly Fee (₹)</Label>
+                <Input
+                  type="number"
+                  value={monthlyFeeInput}
+                  onChange={(e) => {
+                    setMonthlyFeeInput(e.target.value.replace(/\D/g, ''));
+                    setFeeManuallyEdited(true);
+                  }}
+                  placeholder="Auto-filled from package; editable"
+                />
+                <p className="text-xs text-muted-foreground">Auto-populated when package is selected. You can override it.</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Admission Date</Label>
+                <Input type="date" value={form.admission_date} onChange={e => handleChange('admission_date', e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Status</Label>
+                <Select value={form.status} onValueChange={v => handleChange('status', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Parent Information */}
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-2">Parent Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Parent Name *</Label>
+                <Input value={form.parent_name} onChange={e => handleChange('parent_name', e.target.value)} placeholder="Enter parent name" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Parent Relation</Label>
+                <Select value={form.parent_relation || ''} onValueChange={v => handleChange('parent_relation', v)}>
+                  <SelectTrigger><SelectValue placeholder="Select relation" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Father">Father</SelectItem>
+                    <SelectItem value="Mother">Mother</SelectItem>
+                    <SelectItem value="Guardian">Guardian</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Parent Mobile *</Label>
+                <Input
+                  type="tel" inputMode="numeric" pattern="[0-9]{10}" maxLength={10}
+                  value={form.parent_mobile}
+                  onChange={e => handleChange('parent_mobile', e.target.value)}
+                  placeholder="10-digit mobile"
+                />
+                {form.parent_mobile && !/^\d{10}$/.test(form.parent_mobile) && (
+                  <p className="text-xs text-destructive">Enter valid 10-digit mobile number</p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label>Alternate Mobile</Label>
+                <Input
+                  type="tel" inputMode="numeric" pattern="[0-9]{10}" maxLength={10}
+                  value={form.student_mobile}
+                  onChange={e => handleChange('student_mobile', e.target.value)}
+                  placeholder="Optional 10-digit mobile"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Parent Email</Label>
+                <Input type="email" value={form.parent_email} onChange={e => handleChange('parent_email', e.target.value)} placeholder="Parent email" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Student Email</Label>
+                <Input type="email" value={form.student_email} onChange={e => handleChange('student_email', e.target.value)} placeholder="Student email" />
+              </div>
+            </div>
+          </div>
+
+          {/* Additional */}
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-2">Additional</h3>
+            <div className="space-y-1.5">
+              <Label>Remarks</Label>
+              <Textarea value={form.notes} onChange={e => handleChange('notes', e.target.value)} placeholder="Address / any additional notes..." rows={3} />
+            </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>

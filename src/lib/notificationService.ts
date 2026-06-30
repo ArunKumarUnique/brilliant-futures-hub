@@ -52,18 +52,12 @@ export interface GeneratedNotification {
 
 // ---------------- Message Builder ----------------
 
-const honorific = (relation?: string | null) => {
-  const r = (relation || '').trim().toLowerCase();
-  if (r === 'father') return 'Mr.';
-  if (r === 'mother') return 'Mrs.';
-  if (r === 'guardian') return 'Guardian';
-  return 'Mr./Mrs./Guardian';
-};
-
 const salutation = (s: StudentRecipient) => {
-  const h = honorific(s.parent_relation);
   const name = (s.parent_name || '').trim() || 'Parent';
-  return `Dear ${h} ${name}`;
+  const r = (s.parent_relation || '').trim().toLowerCase();
+  if (r === 'father') return `Dear ${name} Sir`;
+  if (r === 'mother') return `Dear ${name} Madam`;
+  return `Dear ${name}`;
 };
 
 const formatHw = (items: HomeworkItem[]) =>

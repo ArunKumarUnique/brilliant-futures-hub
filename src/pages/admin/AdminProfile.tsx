@@ -5,9 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
 import { Upload, Trash2, Loader2, Save, ImagePlus, KeyRound } from 'lucide-react';
 import ChangePasswordDialog from '@/components/admin/ChangePasswordDialog';
+import ImageCropperDialog from '@/components/admin/ImageCropperDialog';
 
 interface TenantProfile {
   id: string;
@@ -51,26 +57,6 @@ const EMPTY = (): Partial<TenantProfile> => ({
 
 const isValidMobile = (v: string) => !v || /^\d{10}$/.test(v);
 
-const compressImage = (file: File, maxSize = 512): Promise<Blob> =>
-  new Promise((resolve, reject) => {
-    const img = new Image();
-    const reader = new FileReader();
-    reader.onload = (e) => { img.src = e.target?.result as string; };
-    reader.onerror = reject;
-    img.onload = () => {
-      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-      const w = Math.round(img.width * scale);
-      const h = Math.round(img.height * scale);
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return reject(new Error('Canvas not supported'));
-      ctx.drawImage(img, 0, 0, w, h);
-      canvas.toBlob((b) => b ? resolve(b) : reject(new Error('Compression failed')), 'image/png', 0.9);
-    };
-    img.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 
 const AdminProfile = () => {
   const { tenantId, refreshTenantProfile } = useAdmin();
@@ -82,6 +68,10 @@ const AdminProfile = () => {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [pwdOpen, setPwdOpen] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [uploadPct, setUploadPct] = useState(0);
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const pendingNav = useRef<null | (() => void)>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -112,8 +102,9 @@ const AdminProfile = () => {
 
   const update = (k: keyof TenantProfile, v: any) => setForm(f => ({ ...f, [k]: v }));
 
-  const handleLogoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    if (fileRef.current) fileRef.current.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       toast({ title: 'Invalid file', description: 'Please upload an image file', variant: 'destructive' });
@@ -123,24 +114,37 @@ const AdminProfile = () => {
       toast({ title: 'File too large', description: 'Maximum size is 5MB', variant: 'destructive' });
       return;
     }
+    const reader = new FileReader();
+    reader.onload = () => setCropSrc(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const uploadCroppedBlob = async (blob: Blob) => {
+    setCropSrc(null);
+    const previousLogo = form.logo_url;
+    const localPreview = URL.createObjectURL(blob);
+    setLogoPreview(localPreview);
     try {
       setUploading(true);
-      const blob = await compressImage(file, 512);
+      setUploadPct(15);
       const path = `${tenantId}/logo-${Date.now()}.png`;
+      const tick = setInterval(() => setUploadPct(p => Math.min(85, p + 7)), 120);
       const { error } = await supabase.storage.from('tenant-logos').upload(path, blob, {
         contentType: 'image/png', upsert: true,
       });
+      clearInterval(tick);
       if (error) throw error;
+      setUploadPct(100);
       const { data } = supabase.storage.from('tenant-logos').getPublicUrl(path);
-      const url = data.publicUrl;
-      setLogoPreview(URL.createObjectURL(blob));
-      update('logo_url', url);
+      update('logo_url', data.publicUrl);
       toast({ title: 'Logo ready', description: 'Click Save to apply' });
     } catch (err: any) {
-      toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
+      setLogoPreview(null);
+      update('logo_url', previousLogo || '');
+      toast({ title: 'Upload failed', description: err.message || 'Please try again', variant: 'destructive' });
     } finally {
       setUploading(false);
-      if (fileRef.current) fileRef.current.value = '';
+      setTimeout(() => setUploadPct(0), 600);
     }
   };
 
@@ -190,6 +194,35 @@ const AdminProfile = () => {
     toast({ title: 'Profile updated successfully' });
   };
 
+  // Warn on browser navigation / tab close when unsaved
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!dirty) return;
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [dirty]);
+
+  // Intercept in-app link clicks while dirty
+  useEffect(() => {
+    if (!dirty) return;
+    const onClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement)?.closest('a');
+      if (!target) return;
+      const href = target.getAttribute('href');
+      if (!href || href.startsWith('http') || target.getAttribute('target') === '_blank') return;
+      if (location.pathname === href) return;
+      e.preventDefault();
+      e.stopPropagation();
+      pendingNav.current = () => { window.location.href = href; };
+      setLeaveOpen(true);
+    };
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, [dirty]);
+
   if (loading) {
     return (
       <div className="space-y-4 animate-pulse">
@@ -204,7 +237,7 @@ const AdminProfile = () => {
   const currentLogo = logoPreview || form.logo_url;
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-3xl space-y-6 pb-28 sm:pb-24">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Profile</h1>
@@ -240,7 +273,13 @@ const AdminProfile = () => {
             )}
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">PNG / JPG up to 5MB. Auto-resized to 512px.</p>
+        {uploading && (
+          <div className="space-y-1">
+            <Progress value={uploadPct} className="h-2" />
+            <p className="text-xs text-muted-foreground">Uploading… {uploadPct}%</p>
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">PNG / JPG up to 5MB. Crop to a square before saving.</p>
       </section>
 
       {/* Basic Details */}
@@ -330,13 +369,37 @@ const AdminProfile = () => {
       </section>
 
       {/* Sticky save bar */}
-      <div className="sticky bottom-0 bg-background/80 backdrop-blur-sm py-3 border-t border-border flex items-center justify-end gap-3">
+      <div className="fixed bottom-0 left-0 right-0 z-30 sm:left-auto sm:right-6 sm:bottom-4 sm:max-w-3xl sm:w-auto bg-background/95 backdrop-blur border-t sm:border border-border sm:rounded-xl sm:shadow-lg px-4 py-3 flex items-center justify-end gap-3" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
         {dirty && <span className="text-xs text-muted-foreground">Unsaved changes</span>}
-        <Button onClick={handleSave} disabled={!dirty || saving}>
+        <Button onClick={handleSave} disabled={!dirty || saving} className="min-w-[140px]">
           {saving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
           Save Changes
         </Button>
       </div>
+
+      <ImageCropperDialog
+        open={!!cropSrc}
+        imageSrc={cropSrc}
+        onCancel={() => setCropSrc(null)}
+        onCropped={uploadCroppedBlob}
+      />
+
+      <AlertDialog open={leaveOpen} onOpenChange={setLeaveOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Are you sure you want to leave?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { pendingNav.current = null; }}>Stay</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { const fn = pendingNav.current; pendingNav.current = null; setLeaveOpen(false); fn?.(); }}>
+              Leave
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
