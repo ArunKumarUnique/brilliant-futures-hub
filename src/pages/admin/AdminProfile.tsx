@@ -57,26 +57,6 @@ const EMPTY = (): Partial<TenantProfile> => ({
 
 const isValidMobile = (v: string) => !v || /^\d{10}$/.test(v);
 
-const compressImage = (file: File, maxSize = 512): Promise<Blob> =>
-  new Promise((resolve, reject) => {
-    const img = new Image();
-    const reader = new FileReader();
-    reader.onload = (e) => { img.src = e.target?.result as string; };
-    reader.onerror = reject;
-    img.onload = () => {
-      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-      const w = Math.round(img.width * scale);
-      const h = Math.round(img.height * scale);
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return reject(new Error('Canvas not supported'));
-      ctx.drawImage(img, 0, 0, w, h);
-      canvas.toBlob((b) => b ? resolve(b) : reject(new Error('Compression failed')), 'image/png', 0.9);
-    };
-    img.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 
 const AdminProfile = () => {
   const { tenantId, refreshTenantProfile } = useAdmin();
