@@ -5,9 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
 import { Upload, Trash2, Loader2, Save, ImagePlus, KeyRound } from 'lucide-react';
 import ChangePasswordDialog from '@/components/admin/ChangePasswordDialog';
+import ImageCropperDialog from '@/components/admin/ImageCropperDialog';
 
 interface TenantProfile {
   id: string;
