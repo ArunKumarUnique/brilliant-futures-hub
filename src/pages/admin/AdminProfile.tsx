@@ -68,6 +68,10 @@ const AdminProfile = () => {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [pwdOpen, setPwdOpen] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [uploadPct, setUploadPct] = useState(0);
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const pendingNav = useRef<null | (() => void)>(null);
 
   useEffect(() => {
     const load = async () => {
