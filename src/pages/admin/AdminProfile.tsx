@@ -273,7 +273,13 @@ const AdminProfile = () => {
             )}
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">PNG / JPG up to 5MB. Auto-resized to 512px.</p>
+        {uploading && (
+          <div className="space-y-1">
+            <Progress value={uploadPct} className="h-2" />
+            <p className="text-xs text-muted-foreground">Uploading… {uploadPct}%</p>
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">PNG / JPG up to 5MB. Crop to a square before saving.</p>
       </section>
 
       {/* Basic Details */}
