@@ -194,6 +194,35 @@ const AdminProfile = () => {
     toast({ title: 'Profile updated successfully' });
   };
 
+  // Warn on browser navigation / tab close when unsaved
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!dirty) return;
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [dirty]);
+
+  // Intercept in-app link clicks while dirty
+  useEffect(() => {
+    if (!dirty) return;
+    const onClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement)?.closest('a');
+      if (!target) return;
+      const href = target.getAttribute('href');
+      if (!href || href.startsWith('http') || target.getAttribute('target') === '_blank') return;
+      if (location.pathname === href) return;
+      e.preventDefault();
+      e.stopPropagation();
+      pendingNav.current = () => { window.location.href = href; };
+      setLeaveOpen(true);
+    };
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, [dirty]);
+
   if (loading) {
     return (
       <div className="space-y-4 animate-pulse">
