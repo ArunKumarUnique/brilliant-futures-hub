@@ -369,13 +369,37 @@ const AdminProfile = () => {
       </section>
 
       {/* Sticky save bar */}
-      <div className="sticky bottom-0 bg-background/80 backdrop-blur-sm py-3 border-t border-border flex items-center justify-end gap-3">
+      <div className="fixed bottom-0 left-0 right-0 z-30 sm:left-auto sm:right-6 sm:bottom-4 sm:max-w-3xl sm:w-auto bg-background/95 backdrop-blur border-t sm:border border-border sm:rounded-xl sm:shadow-lg px-4 py-3 flex items-center justify-end gap-3" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
         {dirty && <span className="text-xs text-muted-foreground">Unsaved changes</span>}
-        <Button onClick={handleSave} disabled={!dirty || saving}>
+        <Button onClick={handleSave} disabled={!dirty || saving} className="min-w-[140px]">
           {saving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
           Save Changes
         </Button>
       </div>
+
+      <ImageCropperDialog
+        open={!!cropSrc}
+        imageSrc={cropSrc}
+        onCancel={() => setCropSrc(null)}
+        onCropped={uploadCroppedBlob}
+      />
+
+      <AlertDialog open={leaveOpen} onOpenChange={setLeaveOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Are you sure you want to leave?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { pendingNav.current = null; }}>Stay</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { const fn = pendingNav.current; pendingNav.current = null; setLeaveOpen(false); fn?.(); }}>
+              Leave
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
