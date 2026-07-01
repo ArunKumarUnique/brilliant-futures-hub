@@ -27,7 +27,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const fetchStats = async () => {
-      if (!tenantId) {
+      if (!tenantId || !selectedYearId) {
         setRegularCount(0); setSummerCount(0); setFeesCollected(0); setPendingFees(0); setTotalRevenue(0); setSummerCollected(0); setSummerPending(0);
         setMonthlyData(MONTHS.map(m => ({ month: m, collected: 0 })));
         setLoading(false);
@@ -36,11 +36,13 @@ const AdminDashboard = () => {
       const currentMonth = new Date().getMonth() + 1;
       const currentYear = new Date().getFullYear();
 
-      const { data: studentData } = await supabase
+      const { data: studentData } = await (supabase as any)
         .from('students')
         .select('id, monthly_fee, student_type')
         .eq('tenant_id', tenantId)
+        .eq('academic_year_id', selectedYearId)
         .eq('status', 'active');
+
 
       const all = (studentData || []) as Array<{ id: string; monthly_fee: number; student_type: string | null }>;
       const regular = all.filter(s => (s.student_type || 'regular') === 'regular');
