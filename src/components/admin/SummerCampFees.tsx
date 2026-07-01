@@ -101,7 +101,7 @@ const SummerCampFees = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchRows(); }, [tenantId]);
+  useEffect(() => { fetchRows(); }, [tenantId, selectedYearId]);
 
   const filtered = useMemo(() => rows.filter(r => {
     if (search && !r.student_name.toLowerCase().includes(search.toLowerCase())) return false;
