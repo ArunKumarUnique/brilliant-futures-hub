@@ -370,6 +370,10 @@ const AdminProfile = () => {
         </div>
       </section>
 
+      {/* Academic Year Configuration */}
+      <AcademicYearManager />
+
+
       {/* Sticky save bar */}
       <div className="fixed bottom-0 left-0 right-0 z-30 sm:left-auto sm:right-6 sm:bottom-4 sm:max-w-3xl sm:w-auto bg-background/95 backdrop-blur border-t sm:border border-border sm:rounded-xl sm:shadow-lg px-4 py-3 flex items-center justify-end gap-3" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
         {dirty && <span className="text-xs text-muted-foreground">Unsaved changes</span>}
