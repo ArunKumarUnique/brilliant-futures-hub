@@ -59,11 +59,11 @@ const PromoteStudentsDialog = ({ open, onClose, onComplete }: Props) => {
     const load = async () => {
       if (!tenantId || !fromYearId) { setStudents([]); return; }
       setLoading(true);
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('students')
         .select('*')
         .eq('tenant_id', tenantId)
-        .eq('academic_year_id' as any, fromYearId)
+        .eq('academic_year_id', fromYearId)
         .eq('status', 'active')
         .order('student_name');
       setStudents((data || []) as any);
@@ -71,6 +71,7 @@ const PromoteStudentsDialog = ({ open, onClose, onComplete }: Props) => {
     };
     load();
   }, [tenantId, fromYearId]);
+
 
   const classes = useMemo(
     () => Array.from(new Set(students.map(s => s.class).filter(Boolean))).sort(),
