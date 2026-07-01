@@ -129,7 +129,11 @@ const AdminDashboard = () => {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Dashboard</h1>
+      <div className="flex items-baseline justify-between mb-6 gap-3 flex-wrap">
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        {activeYear && <span className="text-xs text-muted-foreground">AY {activeYear.name}</span>}
+      </div>
+
 
       <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Regular Programme</h2>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
