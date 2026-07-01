@@ -138,8 +138,12 @@ const AdminLayout = () => {
               <SidebarNav collapsed={false} onNavigate={() => setMobileOpen(false)} />
             </SheetContent>
           </Sheet>
-          <HeaderBrand tenantName={displayName} tenantLogo={tenantLogo} />
+          <div className="flex-1 min-w-0">
+            <HeaderBrand tenantName={displayName} tenantLogo={tenantLogo} />
+          </div>
+          <AcademicYearSwitcher compact />
         </header>
+
         <main className="p-4 overflow-auto">
           <ErrorBoundary>
             <Outlet />
