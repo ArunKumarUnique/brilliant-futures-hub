@@ -47,6 +47,8 @@ type Recipient = 'entire_class' | 'students';
 
 const AdminHomework = () => {
   const { tenantId } = useAdmin();
+  const { selectedYearId } = useAcademicYear();
+
 
   const [homework, setHomework] = useState<Homework[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
