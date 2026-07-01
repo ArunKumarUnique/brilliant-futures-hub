@@ -86,11 +86,12 @@ const AdminHomework = () => {
   };
 
   const fetchStudents = async () => {
-    if (!tenantId) { setStudents([]); return; }
-    const { data } = await supabase
+    if (!tenantId || !selectedYearId) { setStudents([]); return; }
+    const { data } = await (supabase as any)
       .from('students')
       .select('id, student_name, class')
       .eq('tenant_id', tenantId)
+      .eq('academic_year_id', selectedYearId)
       .eq('status', 'active')
       .order('student_name');
     setStudents(data || []);
@@ -99,7 +100,8 @@ const AdminHomework = () => {
   useEffect(() => {
     fetchHomework();
     fetchStudents();
-  }, [tenantId]);
+  }, [tenantId, selectedYearId]);
+
 
   const resetForm = () => {
     setSelectedClass('');
