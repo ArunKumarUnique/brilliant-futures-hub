@@ -386,7 +386,14 @@ const AdminStudents = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <PromoteStudentsDialog
+        open={promoteOpen}
+        onClose={() => setPromoteOpen(false)}
+        onComplete={fetchStudents}
+      />
     </div>
+
   );
 };
 
