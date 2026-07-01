@@ -66,17 +66,19 @@ const AdminDailyLearnings = () => {
 
   const fetchData = async () => {
     if (!tenantId) { setLearnings([]); setStudents([]); setLoading(false); return; }
+    if (!selectedYearId) { setLearnings([]); setStudents([]); setLoading(false); return; }
     setLoading(true);
     const [{ data: lData }, { data: sData }] = await Promise.all([
       supabase.from('daily_learnings').select('*').eq('tenant_id', tenantId).order('date', { ascending: false }).order('created_at', { ascending: false }),
-      supabase.from('students').select('id, student_name, class').eq('tenant_id', tenantId).eq('status', 'active').order('student_name'),
+      (supabase as any).from('students').select('id, student_name, class').eq('tenant_id', tenantId).eq('academic_year_id', selectedYearId).eq('status', 'active').order('student_name'),
     ]);
     setLearnings((lData as DailyLearning[]) || []);
     setStudents((sData as Student[]) || []);
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [tenantId]);
+  useEffect(() => { fetchData(); }, [tenantId, selectedYearId]);
+
 
   const resetForm = () => {
     setLogClass('');
