@@ -14,6 +14,8 @@ import { toast } from '@/hooks/use-toast';
 import { Upload, Trash2, Loader2, Save, ImagePlus, KeyRound } from 'lucide-react';
 import ChangePasswordDialog from '@/components/admin/ChangePasswordDialog';
 import ImageCropperDialog from '@/components/admin/ImageCropperDialog';
+import AcademicYearManager from '@/components/admin/AcademicYearManager';
+
 
 interface TenantProfile {
   id: string;
