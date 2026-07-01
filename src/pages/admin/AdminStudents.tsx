@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAdmin } from '@/contexts/AdminContext';
+import { useAcademicYear } from '@/contexts/AcademicYearContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import usePackages from '@/hooks/usePackages';
 import { Button } from '@/components/ui/button';
@@ -12,9 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Search, Eye, Pencil, Trash2, Users, Sparkles } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, Trash2, Users, Sparkles, GraduationCap } from 'lucide-react';
 import StudentForm, { StudentFormData, StudentType } from '@/components/admin/StudentForm';
 import FeeTracker from '@/components/admin/FeeTracker';
+import PromoteStudentsDialog from '@/components/admin/PromoteStudentsDialog';
+
 
 interface Student {
   id: string;
