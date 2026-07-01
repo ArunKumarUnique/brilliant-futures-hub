@@ -78,35 +78,43 @@ const AdminStudents = () => {
       setLoading(false);
       return;
     }
+    if (!selectedYearId) {
+      setStudents([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('students')
       .select('*')
       .eq('tenant_id', tenantId)
+      .eq('academic_year_id', selectedYearId)
       .order('student_name');
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       setStudents((data || []) as Student[]);
-      // Fetch current month fee statuses
       if (data && data.length > 0) {
         const currentMonth = new Date().getMonth() + 1;
         const { data: feeData } = await supabase
           .from('fee_records')
           .select('student_id, status')
           .eq('tenant_id', tenantId)
-          .in('student_id', data.map(s => s.id))
+          .in('student_id', data.map((s: any) => s.id))
           .eq('month', currentMonth)
           .eq('year', currentYear);
         const statusMap: Record<string, string> = {};
         feeData?.forEach(f => { statusMap[f.student_id] = f.status; });
         setFeeStatuses(statusMap);
+      } else {
+        setFeeStatuses({});
       }
     }
     setLoading(false);
   };
 
-  useEffect(() => { fetchStudents(); }, [tenantId]);
+  useEffect(() => { fetchStudents(); }, [tenantId, selectedYearId]);
+
 
   const handleAdd = async (data: StudentFormData) => {
     if (!tenantId) {
