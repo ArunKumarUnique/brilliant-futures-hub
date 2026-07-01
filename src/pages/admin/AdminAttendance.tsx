@@ -43,6 +43,8 @@ const formatTime12 = (time24: string) => {
 const AdminAttendance = () => {
   const { config } = useTenant();
   const { tenantId, summerCampEnabled } = useAdmin();
+  const { selectedYearId } = useAcademicYear();
+
 
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
