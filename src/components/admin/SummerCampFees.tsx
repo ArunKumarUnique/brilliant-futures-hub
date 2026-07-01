@@ -60,15 +60,18 @@ const SummerCampFees = () => {
       setLoading(false);
       return;
     }
+    if (!selectedYearId) { setRows([]); setLoading(false); return; }
     setLoading(true);
-    const { data: students, error } = await supabase
+    const { data: students, error } = await (supabase as any)
       .from('students')
       .select('id, student_name, parent_name, parent_mobile, class, status, student_type')
       .eq('tenant_id', tenantId)
+      .eq('academic_year_id', selectedYearId)
       .eq('status', 'active')
       .eq('student_type', 'summer_camp')
       .order('student_name');
     if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); setLoading(false); return; }
+
 
     const { data: payments } = await supabase
       .from('summer_camp_payments')
