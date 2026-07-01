@@ -32,6 +32,8 @@ interface StudentWithFee {
 
 const MonthlyFeesTab = () => {
   const { tenantId } = useAdmin();
+  const { selectedYearId } = useAcademicYear();
+
   const { language } = useLanguage();
   const { packages: allPackages } = usePackages(tenantId || null, { status: 'active' });
   const packages = allPackages;
