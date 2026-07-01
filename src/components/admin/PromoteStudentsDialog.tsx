@@ -37,7 +37,7 @@ interface StudentRow {
 
 const PromoteStudentsDialog = ({ open, onClose, onComplete }: Props) => {
   const { tenantId } = useAdmin();
-  const { years } = useAcademicYear();
+  const { years, selectedYearId } = useAcademicYear();
 
   const [fromYearId, setFromYearId] = useState('');
   const [toYearId, setToYearId] = useState('');
@@ -49,11 +49,13 @@ const PromoteStudentsDialog = ({ open, onClose, onComplete }: Props) => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!open) {
-      setFromYearId(''); setToYearId(''); setSelectedClass('');
-      setStudents([]); setSelected(new Set()); setStep('select');
+    if (open) {
+      setFromYearId(selectedYearId || '');
+      setToYearId(''); setSelectedClass('');
+      setSelected(new Set()); setStep('select');
     }
-  }, [open]);
+  }, [open, selectedYearId]);
+
 
   useEffect(() => {
     const load = async () => {
