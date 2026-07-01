@@ -76,10 +76,10 @@ export const AcademicYearProvider: React.FC<{ children: ReactNode }> = ({ childr
       throw new Error('An academic year with this name already exists');
     }
     if (input.is_active) {
-      await supabase.from('academic_years' as any).update({ is_active: false }).eq('tenant_id', tenantId).eq('is_active', true);
+      await (supabase as any).from('academic_years').update({ is_active: false }).eq('tenant_id', tenantId).eq('is_active', true);
     }
     const { data, error } = await supabase
-      .from('academic_years' as any)
+      .from('academic_years')
       .insert({
         tenant_id: tenantId,
         name: input.name.trim(),
@@ -101,7 +101,7 @@ export const AcademicYearProvider: React.FC<{ children: ReactNode }> = ({ childr
         throw new Error('An academic year with this name already exists');
       }
     }
-    const { error } = await supabase.from('academic_years' as any).update(input).eq('id', id).eq('tenant_id', tenantId);
+    const { error } = await (supabase as any).from('academic_years').update(input).eq('id', id).eq('tenant_id', tenantId);
     if (error) throw new Error(error.message);
     await load();
     return true;
@@ -110,8 +110,8 @@ export const AcademicYearProvider: React.FC<{ children: ReactNode }> = ({ childr
   const setActiveYear: AcademicYearContextType['setActiveYear'] = async (id) => {
     if (!tenantId) return false;
     // Deactivate current active first (partial unique index would otherwise conflict)
-    await supabase.from('academic_years' as any).update({ is_active: false }).eq('tenant_id', tenantId).eq('is_active', true);
-    const { error } = await supabase.from('academic_years' as any).update({ is_active: true }).eq('id', id).eq('tenant_id', tenantId);
+    await (supabase as any).from('academic_years').update({ is_active: false }).eq('tenant_id', tenantId).eq('is_active', true);
+    const { error } = await (supabase as any).from('academic_years').update({ is_active: true }).eq('id', id).eq('tenant_id', tenantId);
     if (error) throw new Error(error.message);
     setSelectedYearId(id);
     await load();
