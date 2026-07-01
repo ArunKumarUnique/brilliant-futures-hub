@@ -71,17 +71,26 @@ const AdminAttendance = () => {
       setLoading(false);
       return;
     }
+    if (!selectedYearId) {
+      setStudents([]);
+      setPresentIds(new Set());
+      setArrivalTimes({});
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setSaved(false);
 
-    let query = supabase
+    let query = (supabase as any)
       .from('students')
       .select('id, student_name, class, parent_mobile, parent_email, student_type')
       .eq('tenant_id', tenantId)
+      .eq('academic_year_id', selectedYearId)
       .eq('status', 'active');
     if (studentType === 'summer_camp') {
       query = query.eq('student_type', 'summer_camp');
     } else {
+
       query = query.or('student_type.eq.regular,student_type.is.null');
     }
     const { data: studentData } = await query.order('student_name');
