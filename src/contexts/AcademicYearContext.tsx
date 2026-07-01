@@ -36,12 +36,13 @@ export const AcademicYearProvider: React.FC<{ children: ReactNode }> = ({ childr
   const load = useCallback(async () => {
     if (!tenantId) { setYears([]); setLoading(false); return; }
     setLoading(true);
-    const { data } = await supabase
-      .from('academic_years' as any)
+    const { data } = await (supabase as any)
+      .from('academic_years')
       .select('*')
       .eq('tenant_id', tenantId)
       .order('name', { ascending: false });
     const list = (data || []) as AcademicYear[];
+
     setYears(list);
     // Determine selected: sessionStorage > active > first
     let stored: string | null = null;
