@@ -222,12 +222,21 @@ const AdminStudents = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Students</h1>
-        <Button onClick={() => setFormOpen(true)}>
-          <Plus className="w-4 h-4 mr-1" /> Add Student
-        </Button>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Students</h1>
+          {activeYear && <p className="text-xs text-muted-foreground mt-0.5">Academic Year: {activeYear.name}</p>}
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setPromoteOpen(true)} className="gap-1.5">
+            <GraduationCap className="w-4 h-4" /> Promote
+          </Button>
+          <Button onClick={() => setFormOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" /> Add Student
+          </Button>
+        </div>
       </div>
+
 
       {/* Type Tabs */}
       {summerCampEnabled && (
