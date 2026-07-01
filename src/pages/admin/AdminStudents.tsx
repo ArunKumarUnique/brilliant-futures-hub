@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAdmin } from '@/contexts/AdminContext';
+import { useAcademicYear } from '@/contexts/AcademicYearContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import usePackages from '@/hooks/usePackages';
 import { Button } from '@/components/ui/button';
@@ -12,9 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Search, Eye, Pencil, Trash2, Users, Sparkles } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, Trash2, Users, Sparkles, GraduationCap } from 'lucide-react';
 import StudentForm, { StudentFormData, StudentType } from '@/components/admin/StudentForm';
 import FeeTracker from '@/components/admin/FeeTracker';
+import PromoteStudentsDialog from '@/components/admin/PromoteStudentsDialog';
+
 
 interface Student {
   id: string;
@@ -41,6 +44,7 @@ const CLASS_OPTIONS = [
 const AdminStudents = () => {
   const { config, tr } = useTenant();
   const { tenantId, summerCampEnabled } = useAdmin();
+  const { selectedYearId, activeYear } = useAcademicYear();
   const { language } = useLanguage();
   const { packages: allPackages } = usePackages(tenantId || null, { status: 'active' });
   const regularPackages = allPackages.filter(p => p.type === 'regular');
@@ -57,6 +61,7 @@ const AdminStudents = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [promoteOpen, setPromoteOpen] = useState(false);
 
   // Fee tracker view
   const [viewingFees, setViewingFees] = useState<Student | null>(null);
@@ -65,6 +70,7 @@ const AdminStudents = () => {
   // Current month fee status cache
   const [feeStatuses, setFeeStatuses] = useState<Record<string, string>>({});
 
+
   const fetchStudents = async () => {
     if (!tenantId) {
       toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
@@ -72,43 +78,52 @@ const AdminStudents = () => {
       setLoading(false);
       return;
     }
+    if (!selectedYearId) {
+      setStudents([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('students')
       .select('*')
       .eq('tenant_id', tenantId)
+      .eq('academic_year_id', selectedYearId)
       .order('student_name');
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       setStudents((data || []) as Student[]);
-      // Fetch current month fee statuses
       if (data && data.length > 0) {
         const currentMonth = new Date().getMonth() + 1;
         const { data: feeData } = await supabase
           .from('fee_records')
           .select('student_id, status')
           .eq('tenant_id', tenantId)
-          .in('student_id', data.map(s => s.id))
+          .in('student_id', data.map((s: any) => s.id))
           .eq('month', currentMonth)
           .eq('year', currentYear);
         const statusMap: Record<string, string> = {};
         feeData?.forEach(f => { statusMap[f.student_id] = f.status; });
         setFeeStatuses(statusMap);
+      } else {
+        setFeeStatuses({});
       }
     }
     setLoading(false);
   };
 
-  useEffect(() => { fetchStudents(); }, [tenantId]);
+  useEffect(() => { fetchStudents(); }, [tenantId, selectedYearId]);
+
 
   const handleAdd = async (data: StudentFormData) => {
     if (!tenantId) {
       toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
       return;
     }
-    const { error } = await supabase.from('students').insert({
+    const { error } = await (supabase as any).from('students').insert({
       tenant_id: tenantId,
+      academic_year_id: selectedYearId,
       student_name: data.student_name.trim(),
       parent_name: data.parent_name.trim() || null,
       student_mobile: data.student_mobile.trim() || null,
@@ -124,7 +139,7 @@ const AdminStudents = () => {
       notes: data.notes.trim() || null,
       gender: data.gender || null,
       parent_relation: data.parent_relation || null,
-    } as any);
+    });
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
@@ -132,6 +147,7 @@ const AdminStudents = () => {
       setFormOpen(false);
       fetchStudents();
     }
+
   };
 
   const handleEdit = async (data: StudentFormData) => {
@@ -206,12 +222,21 @@ const AdminStudents = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Students</h1>
-        <Button onClick={() => setFormOpen(true)}>
-          <Plus className="w-4 h-4 mr-1" /> Add Student
-        </Button>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Students</h1>
+          {activeYear && <p className="text-xs text-muted-foreground mt-0.5">Academic Year: {activeYear.name}</p>}
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setPromoteOpen(true)} className="gap-1.5">
+            <GraduationCap className="w-4 h-4" /> Promote
+          </Button>
+          <Button onClick={() => setFormOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" /> Add Student
+          </Button>
+        </div>
       </div>
+
 
       {/* Type Tabs */}
       {summerCampEnabled && (
@@ -278,7 +303,7 @@ const AdminStudents = () => {
             {loading ? (
               <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No students found</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No students found for this Academic Year.</TableCell></TableRow>
             ) : (
               filtered.map(s => {
                 const feeStatus = feeStatuses[s.id] || 'pending';
@@ -361,7 +386,14 @@ const AdminStudents = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <PromoteStudentsDialog
+        open={promoteOpen}
+        onClose={() => setPromoteOpen(false)}
+        onComplete={fetchStudents}
+      />
     </div>
+
   );
 };
 

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdmin } from '@/contexts/AdminContext';
+import { useAcademicYear } from '@/contexts/AcademicYearContext';
+
 import { useLanguage } from '@/contexts/LanguageContext';
 import usePackages from '@/hooks/usePackages';
 import { Button } from '@/components/ui/button';
@@ -30,6 +32,8 @@ interface StudentWithFee {
 
 const MonthlyFeesTab = () => {
   const { tenantId } = useAdmin();
+  const { selectedYearId } = useAcademicYear();
+
   const { language } = useLanguage();
   const { packages: allPackages } = usePackages(tenantId || null, { status: 'active' });
   const packages = allPackages;
@@ -51,14 +55,17 @@ const MonthlyFeesTab = () => {
       setLoading(false);
       return;
     }
+    if (!selectedYearId) { setStudents([]); setLoading(false); return; }
     setLoading(true);
-    const { data: allStudents, error } = await supabase
+    const { data: allStudents, error } = await (supabase as any)
       .from('students')
       .select('*')
       .eq('tenant_id', tenantId)
+      .eq('academic_year_id', selectedYearId)
       .eq('status', 'active')
       .or('student_type.eq.regular,student_type.is.null')
       .order('student_name');
+
 
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -93,7 +100,7 @@ const MonthlyFeesTab = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchStudentsWithFees(); }, [tenantId, month, year, statusFilter]);
+  useEffect(() => { fetchStudentsWithFees(); }, [tenantId, selectedYearId, month, year, statusFilter]);
 
   const getPackageName = (id: string) => {
     const dbPkg = packages.find((p: any) => p.id === id);

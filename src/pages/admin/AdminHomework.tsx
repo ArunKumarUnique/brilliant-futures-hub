@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdmin } from '@/contexts/AdminContext';
+import { useAcademicYear } from '@/contexts/AcademicYearContext';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -45,6 +47,8 @@ type Recipient = 'entire_class' | 'students';
 
 const AdminHomework = () => {
   const { tenantId } = useAdmin();
+  const { selectedYearId } = useAcademicYear();
+
 
   const [homework, setHomework] = useState<Homework[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -82,11 +86,12 @@ const AdminHomework = () => {
   };
 
   const fetchStudents = async () => {
-    if (!tenantId) { setStudents([]); return; }
-    const { data } = await supabase
+    if (!tenantId || !selectedYearId) { setStudents([]); return; }
+    const { data } = await (supabase as any)
       .from('students')
       .select('id, student_name, class')
       .eq('tenant_id', tenantId)
+      .eq('academic_year_id', selectedYearId)
       .eq('status', 'active')
       .order('student_name');
     setStudents(data || []);
@@ -95,7 +100,8 @@ const AdminHomework = () => {
   useEffect(() => {
     fetchHomework();
     fetchStudents();
-  }, [tenantId]);
+  }, [tenantId, selectedYearId]);
+
 
   const resetForm = () => {
     setSelectedClass('');

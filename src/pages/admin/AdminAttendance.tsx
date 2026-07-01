@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAdmin } from '@/contexts/AdminContext';
+import { useAcademicYear } from '@/contexts/AcademicYearContext';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -41,6 +43,8 @@ const formatTime12 = (time24: string) => {
 const AdminAttendance = () => {
   const { config } = useTenant();
   const { tenantId, summerCampEnabled } = useAdmin();
+  const { selectedYearId } = useAcademicYear();
+
 
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
@@ -67,17 +71,26 @@ const AdminAttendance = () => {
       setLoading(false);
       return;
     }
+    if (!selectedYearId) {
+      setStudents([]);
+      setPresentIds(new Set());
+      setArrivalTimes({});
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setSaved(false);
 
-    let query = supabase
+    let query = (supabase as any)
       .from('students')
       .select('id, student_name, class, parent_mobile, parent_email, student_type')
       .eq('tenant_id', tenantId)
+      .eq('academic_year_id', selectedYearId)
       .eq('status', 'active');
     if (studentType === 'summer_camp') {
       query = query.eq('student_type', 'summer_camp');
     } else {
+
       query = query.or('student_type.eq.regular,student_type.is.null');
     }
     const { data: studentData } = await query.order('student_name');
@@ -117,7 +130,7 @@ const AdminAttendance = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [tenantId, date, studentType]);
+  useEffect(() => { fetchData(); }, [tenantId, selectedYearId, date, studentType]);
 
   const togglePresent = (id: string) => {
     setSaved(false);

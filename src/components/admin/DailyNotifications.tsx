@@ -16,6 +16,8 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAcademicYear } from '@/contexts/AcademicYearContext';
+
 import {
   buildMessage,
   isValidMobile,
@@ -44,6 +46,8 @@ interface SkippedEntry {
 
 const DailyNotifications = ({ instituteName, tenantId }: Props) => {
   const queryClient = useQueryClient();
+  const { selectedYearId } = useAcademicYear();
+
 
   const [kind, setKind] = useState<NotificationKind>('both');
   const [audience, setAudience] = useState<Audience>('institute');
@@ -73,17 +77,20 @@ const DailyNotifications = ({ instituteName, tenantId }: Props) => {
   const dateLabel = format(date, 'dd MMM yyyy');
 
   const { data: students = [] } = useQuery({
-    queryKey: ['dn-students', tenantId],
+    queryKey: ['dn-students', tenantId, selectedYearId],
+    enabled: !!selectedYearId,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('students')
         .select('id, student_name, class, parent_name, parent_mobile, gender, parent_relation')
         .eq('tenant_id', tenantId)
+        .eq('academic_year_id', selectedYearId)
         .eq('status', 'active')
         .order('student_name');
       return (data || []) as any[];
     },
   });
+
 
   const { data: homework = [] } = useQuery({
     queryKey: ['dn-homework', tenantId, dateStr],

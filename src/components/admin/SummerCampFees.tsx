@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdmin } from '@/contexts/AdminContext';
+import { useAcademicYear } from '@/contexts/AcademicYearContext';
+
 import usePackages from '@/hooks/usePackages';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +33,8 @@ interface Row {
 
 const SummerCampFees = () => {
   const { tenantId } = useAdmin();
+  const { selectedYearId } = useAcademicYear();
+
   const { packages: allPackages } = usePackages(tenantId || null, { status: 'active' });
   const dbSummerPkg = allPackages.find(p => p.type === 'summer_camp');
   const defaultFee = dbSummerPkg?.fee ?? 0;
@@ -56,15 +60,18 @@ const SummerCampFees = () => {
       setLoading(false);
       return;
     }
+    if (!selectedYearId) { setRows([]); setLoading(false); return; }
     setLoading(true);
-    const { data: students, error } = await supabase
+    const { data: students, error } = await (supabase as any)
       .from('students')
       .select('id, student_name, parent_name, parent_mobile, class, status, student_type')
       .eq('tenant_id', tenantId)
+      .eq('academic_year_id', selectedYearId)
       .eq('status', 'active')
       .eq('student_type', 'summer_camp')
       .order('student_name');
     if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); setLoading(false); return; }
+
 
     const { data: payments } = await supabase
       .from('summer_camp_payments')
@@ -94,7 +101,7 @@ const SummerCampFees = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchRows(); }, [tenantId]);
+  useEffect(() => { fetchRows(); }, [tenantId, selectedYearId]);
 
   const filtered = useMemo(() => rows.filter(r => {
     if (search && !r.student_name.toLowerCase().includes(search.toLowerCase())) return false;

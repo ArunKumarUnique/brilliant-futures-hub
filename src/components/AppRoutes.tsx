@@ -1,6 +1,9 @@
 import { Routes, Route } from 'react-router-dom';
 import { useTenant } from '@/contexts/TenantContext';
 import { AdminProvider } from '@/contexts/AdminContext';
+import { AcademicYearProvider } from '@/contexts/AcademicYearContext';
+import AdminDailyNotifications from '@/pages/admin/AdminDailyNotifications';
+
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobileCTA from '@/components/MobileCTA';
@@ -43,6 +46,7 @@ const AppRoutes = () => {
 
   return (
     <AdminProvider adminEmail={adminEmail} adminPassword={adminPassword} defaultTenantId={config.id} defaultTenantName={config.instituteName}>
+      <AcademicYearProvider>
       <Routes>
         {/* Public site */}
         <Route path="/" element={<PublicLayout><Index /></PublicLayout>} />
@@ -65,6 +69,7 @@ const AppRoutes = () => {
           <Route path="homework" element={<AdminHomework />} />
           <Route path="timetable" element={<AdminTimetable />} />
           <Route path="daily-learnings" element={<AdminDailyLearnings />} />
+          <Route path="daily-notifications" element={<AdminDailyNotifications />} />
           <Route path="messages" element={<AdminMessageGenerator />} />
           <Route path="profile" element={<AdminProfile />} />
           <Route path="brochure-builder" element={<BrochureBuilder />} />
@@ -72,7 +77,9 @@ const AppRoutes = () => {
 
         <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
       </Routes>
+      </AcademicYearProvider>
     </AdminProvider>
+
   );
 };
 

@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdmin } from '@/contexts/AdminContext';
+import { useAcademicYear } from '@/contexts/AcademicYearContext';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -42,6 +44,8 @@ type Recipient = 'entire_class' | 'students';
 
 const AdminDailyLearnings = () => {
   const { tenantId } = useAdmin();
+  const { selectedYearId } = useAcademicYear();
+
 
   const [learnings, setLearnings] = useState<DailyLearning[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -62,17 +66,19 @@ const AdminDailyLearnings = () => {
 
   const fetchData = async () => {
     if (!tenantId) { setLearnings([]); setStudents([]); setLoading(false); return; }
+    if (!selectedYearId) { setLearnings([]); setStudents([]); setLoading(false); return; }
     setLoading(true);
     const [{ data: lData }, { data: sData }] = await Promise.all([
       supabase.from('daily_learnings').select('*').eq('tenant_id', tenantId).order('date', { ascending: false }).order('created_at', { ascending: false }),
-      supabase.from('students').select('id, student_name, class').eq('tenant_id', tenantId).eq('status', 'active').order('student_name'),
+      (supabase as any).from('students').select('id, student_name, class').eq('tenant_id', tenantId).eq('academic_year_id', selectedYearId).eq('status', 'active').order('student_name'),
     ]);
     setLearnings((lData as DailyLearning[]) || []);
     setStudents((sData as Student[]) || []);
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [tenantId]);
+  useEffect(() => { fetchData(); }, [tenantId, selectedYearId]);
+
 
   const resetForm = () => {
     setLogClass('');
