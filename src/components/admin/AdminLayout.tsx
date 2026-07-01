@@ -2,10 +2,11 @@ import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useTenant } from '@/contexts/TenantContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { LayoutDashboard, Users, Package, Receipt, Bell, LogOut, PanelLeftClose, PanelLeft, FileImage, ClipboardCheck, BookOpen, Calendar, Lightbulb, MessageSquareText, GraduationCap, UserCog } from 'lucide-react';
+import { LayoutDashboard, Users, Package, Receipt, Bell, LogOut, PanelLeftClose, PanelLeft, FileImage, ClipboardCheck, BookOpen, Calendar, Lightbulb, MessageSquareText, GraduationCap, UserCog, Send } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
+import AcademicYearSwitcher from '@/components/admin/AcademicYearSwitcher';
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
@@ -13,14 +14,16 @@ const navItems = [
   { label: 'Attendance', icon: ClipboardCheck, path: '/admin/attendance' },
   { label: 'Homework', icon: BookOpen, path: '/admin/homework' },
   { label: 'Daily Learnings', icon: Lightbulb, path: '/admin/daily-learnings' },
+  { label: 'Daily Notifications', icon: Send, path: '/admin/daily-notifications' },
+  { label: 'Fee Tracking', icon: Receipt, path: '/admin/fees' },
   { label: 'Message Generator', icon: MessageSquareText, path: '/admin/messages' },
   { label: 'Timetable', icon: Calendar, path: '/admin/timetable' },
   { label: 'Packages', icon: Package, path: '/admin/packages' },
-  { label: 'Fee Tracking', icon: Receipt, path: '/admin/fees' },
   { label: 'Notifications', icon: Bell, path: '/admin/notifications' },
   { label: 'Brochure Builder', icon: FileImage, path: '/admin/brochure-builder' },
   { label: 'Profile', icon: UserCog, path: '/admin/profile' },
 ];
+
 
 const TenantBadge = ({ logo, name, size = 'sm' }: { logo: string | null; name: string; size?: 'sm' | 'md' }) => {
   const dim = size === 'md' ? 'w-8 h-8 text-sm' : 'w-7 h-7 text-xs';
