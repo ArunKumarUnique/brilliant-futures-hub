@@ -44,6 +44,7 @@ const CLASS_OPTIONS = [
 const AdminStudents = () => {
   const { config, tr } = useTenant();
   const { tenantId, summerCampEnabled } = useAdmin();
+  const { selectedYearId, activeYear } = useAcademicYear();
   const { language } = useLanguage();
   const { packages: allPackages } = usePackages(tenantId || null, { status: 'active' });
   const regularPackages = allPackages.filter(p => p.type === 'regular');
@@ -60,6 +61,7 @@ const AdminStudents = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [promoteOpen, setPromoteOpen] = useState(false);
 
   // Fee tracker view
   const [viewingFees, setViewingFees] = useState<Student | null>(null);
@@ -67,6 +69,7 @@ const AdminStudents = () => {
 
   // Current month fee status cache
   const [feeStatuses, setFeeStatuses] = useState<Record<string, string>>({});
+
 
   const fetchStudents = async () => {
     if (!tenantId) {
