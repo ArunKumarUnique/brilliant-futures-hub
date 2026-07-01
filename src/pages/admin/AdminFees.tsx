@@ -55,14 +55,17 @@ const MonthlyFeesTab = () => {
       setLoading(false);
       return;
     }
+    if (!selectedYearId) { setStudents([]); setLoading(false); return; }
     setLoading(true);
-    const { data: allStudents, error } = await supabase
+    const { data: allStudents, error } = await (supabase as any)
       .from('students')
       .select('*')
       .eq('tenant_id', tenantId)
+      .eq('academic_year_id', selectedYearId)
       .eq('status', 'active')
       .or('student_type.eq.regular,student_type.is.null')
       .order('student_name');
+
 
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
