@@ -303,7 +303,7 @@ const AdminStudents = () => {
             {loading ? (
               <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No students found</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No students found for this Academic Year.</TableCell></TableRow>
             ) : (
               filtered.map(s => {
                 const feeStatus = feeStatuses[s.id] || 'pending';
