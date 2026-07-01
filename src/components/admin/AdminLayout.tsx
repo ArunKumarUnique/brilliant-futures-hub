@@ -164,8 +164,12 @@ const AdminLayout = () => {
           <button onClick={() => setCollapsed(c => !c)} className="p-1.5 rounded-md hover:bg-muted transition" aria-label="Toggle sidebar">
             {collapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
           </button>
-          <HeaderBrand tenantName={displayName} tenantLogo={tenantLogo} />
+          <div className="flex-1 min-w-0">
+            <HeaderBrand tenantName={displayName} tenantLogo={tenantLogo} />
+          </div>
+          <AcademicYearSwitcher />
         </header>
+
         <main className="flex-1 p-6 overflow-auto">
           <ErrorBoundary>
             <Outlet />
