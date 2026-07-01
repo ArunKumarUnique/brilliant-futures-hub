@@ -121,8 +121,9 @@ const AdminStudents = () => {
       toast({ title: 'Tenant missing', description: 'Please log in again.', variant: 'destructive' });
       return;
     }
-    const { error } = await supabase.from('students').insert({
+    const { error } = await (supabase as any).from('students').insert({
       tenant_id: tenantId,
+      academic_year_id: selectedYearId,
       student_name: data.student_name.trim(),
       parent_name: data.parent_name.trim() || null,
       student_mobile: data.student_mobile.trim() || null,
@@ -138,7 +139,7 @@ const AdminStudents = () => {
       notes: data.notes.trim() || null,
       gender: data.gender || null,
       parent_relation: data.parent_relation || null,
-    } as any);
+    });
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
@@ -146,6 +147,7 @@ const AdminStudents = () => {
       setFormOpen(false);
       fetchStudents();
     }
+
   };
 
   const handleEdit = async (data: StudentFormData) => {
