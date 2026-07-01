@@ -77,17 +77,20 @@ const DailyNotifications = ({ instituteName, tenantId }: Props) => {
   const dateLabel = format(date, 'dd MMM yyyy');
 
   const { data: students = [] } = useQuery({
-    queryKey: ['dn-students', tenantId],
+    queryKey: ['dn-students', tenantId, selectedYearId],
+    enabled: !!selectedYearId,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('students')
         .select('id, student_name, class, parent_name, parent_mobile, gender, parent_relation')
         .eq('tenant_id', tenantId)
+        .eq('academic_year_id', selectedYearId)
         .eq('status', 'active')
         .order('student_name');
       return (data || []) as any[];
     },
   });
+
 
   const { data: homework = [] } = useQuery({
     queryKey: ['dn-homework', tenantId, dateStr],
