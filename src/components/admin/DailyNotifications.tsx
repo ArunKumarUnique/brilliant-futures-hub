@@ -46,6 +46,8 @@ interface SkippedEntry {
 
 const DailyNotifications = ({ instituteName, tenantId }: Props) => {
   const queryClient = useQueryClient();
+  const { selectedYearId } = useAcademicYear();
+
 
   const [kind, setKind] = useState<NotificationKind>('both');
   const [audience, setAudience] = useState<Audience>('institute');
