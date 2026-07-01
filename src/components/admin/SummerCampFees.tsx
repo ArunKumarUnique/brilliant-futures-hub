@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdmin } from '@/contexts/AdminContext';
+import { useAcademicYear } from '@/contexts/AcademicYearContext';
+
 import usePackages from '@/hooks/usePackages';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
