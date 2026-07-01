@@ -130,7 +130,7 @@ const AdminAttendance = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [tenantId, date, studentType]);
+  useEffect(() => { fetchData(); }, [tenantId, selectedYearId, date, studentType]);
 
   const togglePresent = (id: string) => {
     setSaved(false);
