@@ -78,7 +78,7 @@ export const AcademicYearProvider: React.FC<{ children: ReactNode }> = ({ childr
     if (input.is_active) {
       await (supabase as any).from('academic_years').update({ is_active: false }).eq('tenant_id', tenantId).eq('is_active', true);
     }
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('academic_years')
       .insert({
         tenant_id: tenantId,
@@ -91,7 +91,8 @@ export const AcademicYearProvider: React.FC<{ children: ReactNode }> = ({ childr
       .single();
     if (error) throw new Error(error.message);
     await load();
-    return data as AcademicYear;
+    return data as unknown as AcademicYear;
+
   };
 
   const updateYear: AcademicYearContextType['updateYear'] = async (id, input) => {
