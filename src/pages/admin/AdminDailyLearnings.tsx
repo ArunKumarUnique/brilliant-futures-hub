@@ -44,6 +44,8 @@ type Recipient = 'entire_class' | 'students';
 
 const AdminDailyLearnings = () => {
   const { tenantId } = useAdmin();
+  const { selectedYearId } = useAcademicYear();
+
 
   const [learnings, setLearnings] = useState<DailyLearning[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
