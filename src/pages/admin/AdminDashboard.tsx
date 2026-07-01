@@ -112,7 +112,7 @@ const AdminDashboard = () => {
     };
 
     fetchStats();
-  }, [tenantId]);
+  }, [tenantId, selectedYearId]);
 
   const regularStats = [
     { label: 'Regular Students', value: loading ? '...' : String(regularCount), icon: Users, color: 'bg-primary/10 text-primary' },
