@@ -100,7 +100,7 @@ const MonthlyFeesTab = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchStudentsWithFees(); }, [tenantId, month, year, statusFilter]);
+  useEffect(() => { fetchStudentsWithFees(); }, [tenantId, selectedYearId, month, year, statusFilter]);
 
   const getPackageName = (id: string) => {
     const dbPkg = packages.find((p: any) => p.id === id);
