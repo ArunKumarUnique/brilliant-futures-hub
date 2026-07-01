@@ -1,6 +1,9 @@
 import { Routes, Route } from 'react-router-dom';
 import { useTenant } from '@/contexts/TenantContext';
 import { AdminProvider } from '@/contexts/AdminContext';
+import { AcademicYearProvider } from '@/contexts/AcademicYearContext';
+import AdminDailyNotifications from '@/pages/admin/AdminDailyNotifications';
+
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobileCTA from '@/components/MobileCTA';
