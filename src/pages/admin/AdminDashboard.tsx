@@ -12,6 +12,8 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const AdminDashboard = () => {
   const { config } = useTenant();
   const { tenantId, summerCampEnabled } = useAdmin();
+  const { selectedYearId, activeYear } = useAcademicYear();
+
 
   const [regularCount, setRegularCount] = useState(0);
   const [summerCount, setSummerCount] = useState(0);
