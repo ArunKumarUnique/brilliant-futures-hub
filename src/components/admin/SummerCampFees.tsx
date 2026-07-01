@@ -33,6 +33,8 @@ interface Row {
 
 const SummerCampFees = () => {
   const { tenantId } = useAdmin();
+  const { selectedYearId } = useAcademicYear();
+
   const { packages: allPackages } = usePackages(tenantId || null, { status: 'active' });
   const dbSummerPkg = allPackages.find(p => p.type === 'summer_camp');
   const defaultFee = dbSummerPkg?.fee ?? 0;
